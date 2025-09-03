@@ -28,7 +28,7 @@ Chuẩn Dataset của repository:
                 _ '0': mã hóa thủ công
                 _ '1': mã hóa bằng hàm time_features( fourier, sin-cos)
             + freq
-    read_data
+    __read_data__:
 '''
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
