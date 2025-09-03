@@ -10,7 +10,26 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-
+'''
+Chuẩn Dataset của repository:
+    __init__: 
+        _ Nhận vào:
+            + root_path: đường dẫn gốc
+            + flag: cờ báo mục đích tập dữ liệu 'train', 'test', 'pred'
+            + size
+            + features: Quyết định số lượng 
+                _ 'S': lấy 1 cột target duy nhất để học quy luật và dự báo chính nó
+                _ 'M': lấy tất cả các cột trong quá khứ để học và dự đoán tất cả giá trị của các cột ấy trong tương lai( trừ cột date)
+                _ 'MS': lấy tất cả các cột trong quá khứ để học và dự đoán giá trị của 1 cột target trong tương lai
+            + data_path: đường dẫn tương đối tới file data
+            + target: cột mục tiêu, kết hợp với cờ features để chọn cột học và dự đoán trong dataframe
+            + scale: True nếu chuẩn hóa dữ liệu về means = 0, std = 1, False else
+            + timeenc: chỉ định cách mã hóa cột thời gian:
+                _ '0': mã hóa thủ công
+                _ '1': mã hóa bằng hàm time_features( fourier, sin-cos)
+            + freq
+    read_data
+'''
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTh1.csv',
