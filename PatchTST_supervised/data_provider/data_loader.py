@@ -29,6 +29,26 @@ Chuẩn Dataset của repository:
                 _ '1': mã hóa bằng hàm time_features( fourier, sin-cos)
             + freq
     __read_data__:
+        _ Đọc và lọc data theo các cờ chỉ định
+
+    __get-item__:
+        _ Nhận vào index
+        _ Trả về:
+            + seq_x: input của encoder với seq_len hàng trong data( tương ứng với seq_len thời điểm)
+                     từ thời điểm index đến thời điểm index + seq_len
+            + seq_y: kích thước label_len + pred_len. 
+                     label_len thời điểm là những thời điểm cuối cùng của seq_x, dùng để "mồi" cho decoder sinh thông tin thay vì sinh giá trị tương lai từ dữ liệu rỗng
+                     pred_len thời điểm là số thời điểm tương lai cần dự đoán.
+            + seq_x_mark: timestamp ứng với seq_x
+            + seq_y_mark: timestamp ứng với seq_y
+
+    __len__:
+        _ Trả về số lượng các sample (seq_x, seq_y) trong dataset: 
+            do mỗi sample (seq_x, seq_y) sẽ sử dụng tổng cộng seq_len + pred_len hàng trong dataset( seq_len + pred_len thời điểm)
+            dịch đi 1 thời điểm sẽ tạo ra 1 sample mới
+            tất cả sẽ có len(data) - len(seq_x) - len(seq_y) + 1
+
+    __invertransform__: không cần quan tâm
 '''
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
@@ -60,21 +80,29 @@ class Dataset_ETT_hour(Dataset):
         self.__read_data__()
 
     def __read_data__(self):
+        # Chuẩn hóa
         self.scaler = StandardScaler()
+        # Đọc file csv
         df_raw = pd.read_csv(os.path.join(self.root_path,
                                           self.data_path))
 
+        # Xác định các hàng tham gia vào tập train, test và validate:
+        # border1s[0]: border2s[0] -> begin index và end index của tập train
+        # border1s[1]: border2s[1] -> begin index và end index của tập validate
+        # border1s[2]: border2s[2] -> begin index và end index của tập test
         border1s = [0, 12 * 30 * 24 - self.seq_len, 12 * 30 * 24 + 4 * 30 * 24 - self.seq_len]
         border2s = [12 * 30 * 24, 12 * 30 * 24 + 4 * 30 * 24, 12 * 30 * 24 + 8 * 30 * 24]
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 
+        # Xác định các cột tham gia vào dataset:
         if self.features == 'M' or self.features == 'MS':
             cols_data = df_raw.columns[1:]
             df_data = df_raw[cols_data]
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
 
+        # Áp dụng chuẩn hóa với tập train
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)
@@ -82,8 +110,11 @@ class Dataset_ETT_hour(Dataset):
         else:
             data = df_data.values
 
+        # Chọn các hàng tham gia vào data
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
+
+        # Mã hóa thời gian
         if self.timeenc == 0:
             df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
