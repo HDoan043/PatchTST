@@ -10,6 +10,52 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+'''
+Chuẩn Dataset của repository:
+    __init__: 
+        _ Nhận vào:
+            + root_path: đường dẫn gốc
+            + flag: cờ báo mục đích tập dữ liệu 'train', 'test', 'pred'
+            + size
+            + features: Quyết định số lượng 
+                _ 'S': lấy 1 cột target duy nhất để học quy luật và dự báo chính nó
+                _ 'M': lấy tất cả các cột trong quá khứ để học và dự đoán tất cả giá trị của các cột ấy trong tương lai( trừ cột date)
+                _ 'MS': lấy tất cả các cột trong quá khứ để học và dự đoán giá trị của 1 cột target trong tương lai
+            + data_path: đường dẫn tương đối tới file data
+            + target: cột mục tiêu, kết hợp với cờ features để chọn cột học và dự đoán trong dataframe
+            + scale: True nếu chuẩn hóa dữ liệu về means = 0, std = 1, False else
+            + timeenc: chỉ định cách mã hóa cột thời gian:
+                _ '0': mã hóa thủ công
+                _ '1': mã hóa bằng hàm time_features( fourier, sin-cos)
+            + freq
+    __read_data__:
+        _ Đọc và lọc data theo các cờ chỉ định
+
+    __get-item__:
+        _ Nhận vào index
+        _ Trả về:
+            + seq_x: input của encoder với seq_len hàng trong data( tương ứng với seq_len thời điểm)
+                     từ thời điểm index đến thời điểm index + seq_len
+            + seq_y: kích thước label_len + pred_len. 
+                     label_len thời điểm là những thời điểm cuối cùng của seq_x, dùng để "mồi" cho decoder sinh thông tin thay vì sinh giá trị tương lai từ dữ liệu rỗng
+                     pred_len thời điểm là số thời điểm tương lai cần dự đoán.
+            + seq_x_mark: timestamp ứng với seq_x
+            + seq_y_mark: timestamp ứng với seq_y
+
+    __len__:
+        _ Trả về số lượng các sample (seq_x, seq_y) trong dataset: 
+            do mỗi sample (seq_x, seq_y) sẽ sử dụng tổng cộng seq_len + pred_len hàng trong dataset( seq_len + pred_len thời điểm)
+            dịch đi 1 thời điểm sẽ tạo ra 1 sample mới
+            tất cả sẽ có len(data) - len(seq_x) - len(seq_y) + 1
+
+    __invertransform__: không cần quan tâm
+'''
+
+class Time_Series_Practice_Dataset_00(Dataset):
+    def __init__(self, root_path, flag='train', size=None,
+                 features='S', data_path='ETTh1.csv',
+                 target='OT', scale=True, timeenc=0, freq='d'):
+        
 
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
