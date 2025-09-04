@@ -112,7 +112,7 @@ class Time_Series_Practice_Dataset_00(Dataset):
         if self.scale:
             train_data = df_data[:int(len(df_train_raw)*0.8)]
             self.scaler.fit(train_data.values)
-            data = self.scaler.transform(df_train_data.values)
+            data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
 
