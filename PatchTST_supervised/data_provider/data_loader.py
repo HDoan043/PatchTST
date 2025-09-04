@@ -95,8 +95,8 @@ class Time_Series_Practice_Dataset_00(Dataset):
                                           self.train_data_path))
         df_test_raw = pd.read_csv(os.path.join(self.root_path, self.test_data_path))
 
-        train_data = df_train_raw[:int(len(df_train_raw)*0.8)]
-        vali_data = df_train_raw[int(len(df_train_raw)*0.8):]
+        train_data = df_train_raw[:int(len(df_train_raw)*0.7)]
+        vali_data = df_train_raw[int(len(df_train_raw)*0.7):]
         label_data = df_train_raw[len(df_train_raw) - 60:]
         test_data = pd.concat([label_data, df_test_raw], ignore_index = True)
 
