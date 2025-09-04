@@ -97,7 +97,7 @@ class Time_Series_Practice_Dataset_00(Dataset):
 
         train_data = df_train_raw[:int(len(df_train_raw)*0.7)]
         vali_data = df_train_raw[int(len(df_train_raw)*0.7):]
-        label_data = df_train_raw[len(df_train_raw) - 60:]
+        label_data = df_train_raw[len(df_train_raw) - 365:]
         test_data = pd.concat([label_data, df_test_raw], ignore_index = True)
 
         set = [train_data, vali_data, test_data]
