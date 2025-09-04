@@ -7,6 +7,7 @@ data_dict = {
     'ETTm1': Dataset_ETT_minute,
     'ETTm2': Dataset_ETT_minute,
     'custom': Dataset_Custom,
+    'Time Series Practice Dataset': Time_Series_Practice_Dataset_00
 }
 
 
