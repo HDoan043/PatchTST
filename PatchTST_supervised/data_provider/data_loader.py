@@ -85,7 +85,7 @@ class Time_Series_Practice_Dataset_00(Dataset):
         self.freq = freq
 
         self.root_path = root_path
-        self.train_data_path = train_data_path
+        self.train_data_path = data_path
         self.test_data_path = test_data_path
         self.__read_data__()
 
