@@ -110,11 +110,11 @@ class Time_Series_Practice_Dataset_00(Dataset):
             df_data = choosen_set[[self.target]]
 
         if self.scale:
-            train_data = df_train_raw[:int(len(df_train_raw)*0.8)]
+            train_data = df_data[:int(len(df_train_raw)*0.8)]
             self.scaler.fit(train_data.values)
             data = self.scaler.transform(df_train_data.values)
         else:
-            data = df_train_data.values
+            data = df_data.values
 
         df_stamp = choosen_set[['ds']]
         df_stamp['ds'] = pd.to_datetime(df_stamp.ds)
