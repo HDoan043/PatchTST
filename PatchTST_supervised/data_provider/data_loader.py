@@ -139,12 +139,12 @@ class Time_Series_Practice_Dataset_00(Dataset):
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
 
-        seq_x = self.data_x[s_begin:s_end]
-        seq_y = self.data_y[r_begin:r_end]
-        seq_x_mark = self.data_stamp[s_begin:s_end]
-        seq_y_mark = self.data_stamp[r_begin:r_end]
+        seq_x = torch.tensor(self.data_x[s_begin:s_end].values, dtype=torch.float32)
+        seq_y = torch.tensor(self.data_y[r_begin:r_end].values, dtype=torch.float32)
+        seq_x_mark = torch.tensor(self.data_stamp[s_begin:s_end].values, dtype=torch.float32)
+        seq_y_mark = torch.tensor(self.data_stamp[r_begin:r_end].values, dtype=torch.float32)
 
-        return seq_x.to_numpy(), seq_y.to_numpy(), seq_x_mark, seq_y_mark
+        return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
