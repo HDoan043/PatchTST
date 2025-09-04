@@ -104,17 +104,17 @@ class Time_Series_Practice_Dataset_00(Dataset):
         choosen_set = set[self.set_type]
         
         if self.features == 'M' or self.features == 'MS':
-            cols_data = df_raw.columns[1:]
-            df_data = df_raw[cols_data]
+            cols_data = choosen_set.columns[1:]
+            df_data = choosen_set[cols_data]
         elif self.features == 'S':
-            df_data = df_raw[[self.target]]
+            df_data = choosen_set[[self.target]]
 
         if self.scale:
             train_data = df_train_raw[:int(len(df_train_raw)*0.8)]
             self.scaler.fit(train_data.values)
-            data = self.scaler.transform(df_data.values)
+            data = self.scaler.transform(df_train_data.values)
         else:
-            data = df_data.values
+            data = df_train_data.values
 
         df_stamp = choosen_set[['ds']]
         df_stamp['ds'] = pd.to_datetime(df_stamp.ds)
