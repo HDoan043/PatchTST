@@ -57,7 +57,7 @@ class Time_Series_Practice_Dataset_00(Dataset):
                  flag='train', 
                  size=None,
                  features='S', 
-                 train_data_path='train.csv',
+                 data_path='train.csv',
                  test_data_path ='test.csv',
                  target='number_sold', 
                  scale=True, 
