@@ -93,7 +93,9 @@ class Exp_Main(Exp_Basic):
                 pred = outputs.detach().cpu()
                 true = batch_y.detach().cpu()
 
-                print(pred.isnan())
+                nan_pred = pred.isnan()
+                nan_ele = nan_pred*pred
+                print(nan_ele)
 
                 loss = criterion(pred, true)
 
