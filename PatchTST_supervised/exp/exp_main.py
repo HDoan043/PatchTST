@@ -92,7 +92,8 @@ class Exp_Main(Exp_Basic):
 
                 pred = outputs.detach().cpu()
                 true = batch_y.detach().cpu()
-                print("predic shape {},    ground truth shape {}".format(pred.shape, true.shape))
+
+                print(pred.isnan())
 
                 loss = criterion(pred, true)
 
