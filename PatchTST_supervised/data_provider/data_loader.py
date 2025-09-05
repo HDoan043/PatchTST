@@ -128,8 +128,8 @@ class Time_Series_Practice_Dataset_00(Dataset):
             data_stamp = time_features(pd.to_datetime(df_stamp['ds'].values), freq=self.freq)
             data_stamp = data_stamp.transpose(1, 0)
 
-        self.data_x = choosen_set
-        self.data_y = choosen_set
+        self.data_x = data
+        self.data_y = data
         
         self.data_stamp = data_stamp
 
