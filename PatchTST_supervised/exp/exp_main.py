@@ -16,6 +16,7 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
 
 warnings.filterwarnings('ignore')
 
@@ -55,7 +56,8 @@ class Exp_Main(Exp_Basic):
         total_loss = []
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
+            pbar = tqdm(vali_loader)
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
 
@@ -91,6 +93,8 @@ class Exp_Main(Exp_Basic):
                 true = batch_y.detach().cpu()
 
                 loss = criterion(pred, true)
+
+                pbar.set_postfix({"Loss" : f"{loss}" })
 
                 total_loss.append(loss)
         total_loss = np.average(total_loss)
@@ -129,7 +133,8 @@ class Exp_Main(Exp_Basic):
 
             self.model.train()
             epoch_time = time.time()
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
+            pbar = tqdm(train_loader, desc = f"Epoch: {epoch}")
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
                 iter_count += 1
                 model_optim.zero_grad()
                 batch_x = batch_x.float().to(self.device)
@@ -193,6 +198,8 @@ class Exp_Main(Exp_Basic):
                 if self.args.lradj == 'TST':
                     adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                     scheduler.step()
+
+                pbar.set_postfix({"Loss": f"{loss}"})
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
