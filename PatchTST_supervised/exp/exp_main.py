@@ -93,11 +93,11 @@ class Exp_Main(Exp_Basic):
                 pred = outputs.detach().cpu()
                 true = batch_y.detach().cpu()
 
-                nan_pred = pred.isnan()
-                nan_ele = nan_pred*pred
-                print(torch.sum(nan_ele))
+                print(torch.sum(pred.isnan()))
 
                 loss = criterion(pred, true)
+
+                print(loss)
 
                 # pbar.set_postfix({"Loss" : f"{loss}" })
 
