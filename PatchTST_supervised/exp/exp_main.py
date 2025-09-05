@@ -54,6 +54,10 @@ class Exp_Main(Exp_Basic):
 
     def vali(self, vali_data, vali_loader, criterion):
         print("Start validation")
+
+        print(vali_data.head())
+        print()
+        print(vali_loader.head())
         total_loss = []
         self.model.eval()
         with torch.no_grad():
