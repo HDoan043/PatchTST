@@ -53,8 +53,6 @@ class Exp_Main(Exp_Basic):
         return criterion
 
     def vali(self, vali_data, vali_loader, criterion):
-        print("Start validation")
-
         total_loss = []
         self.model.eval()
         with torch.no_grad():
@@ -106,8 +104,7 @@ class Exp_Main(Exp_Basic):
                 total_loss.append(loss)
         total_loss = np.average(total_loss)
         self.model.train()
-
-        print("End validation")
+        
         return total_loss
 
     def train(self, setting):
@@ -214,11 +211,6 @@ class Exp_Main(Exp_Basic):
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
             vali_loss = self.vali(vali_data, vali_loader, criterion)
-            print("---------- DEBUG TEST LOSS --------")
-            print(len(test_data))
-            print(len(test_loader))
-            test_loss = self.vali(test_data, test_loader, criterion)
-            print("---------- END DEGUB --------------")
 
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss, test_loss))
