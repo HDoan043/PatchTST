@@ -95,7 +95,7 @@ class Exp_Main(Exp_Basic):
 
                 nan_pred = pred.isnan()
                 nan_ele = nan_pred*pred
-                print(nan_ele)
+                print(torch.sum(nan_ele).value)
 
                 loss = criterion(pred, true)
 
