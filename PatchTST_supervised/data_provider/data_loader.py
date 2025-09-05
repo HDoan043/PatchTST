@@ -139,8 +139,8 @@ class Time_Series_Practice_Dataset_00(Dataset):
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
 
-        print(self.data_x.head())
-        print(self.data_x.dtype())
+        # print(self.data_x.head())
+        print(self.data_x.dtypes)
 
         seq_x = torch.tensor(self.data_x[s_begin:s_end].to_numpy(), dtype=torch.float32)
         seq_y = torch.tensor(self.data_y[r_begin:r_end].to_numpy(), dtype=torch.float32)
