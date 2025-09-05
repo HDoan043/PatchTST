@@ -56,8 +56,9 @@ class Exp_Main(Exp_Basic):
         total_loss = []
         self.model.eval()
         with torch.no_grad():
-            pbar = tqdm(vali_loader)
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
+            # pbar = tqdm(vali_loader)
+            # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
 
@@ -94,7 +95,7 @@ class Exp_Main(Exp_Basic):
 
                 loss = criterion(pred, true)
 
-                pbar.set_postfix({"Loss" : f"{loss}" })
+                # pbar.set_postfix({"Loss" : f"{loss}" })
 
                 total_loss.append(loss)
         total_loss = np.average(total_loss)
@@ -133,8 +134,9 @@ class Exp_Main(Exp_Basic):
 
             self.model.train()
             epoch_time = time.time()
-            pbar = tqdm(train_loader, desc = f"Epoch: {epoch}")
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
+            # pbar = tqdm(train_loader, desc = f"Epoch: {epoch}")
+            # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
                 iter_count += 1
                 model_optim.zero_grad()
                 batch_x = batch_x.float().to(self.device)
@@ -199,7 +201,7 @@ class Exp_Main(Exp_Basic):
                     adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                     scheduler.step()
 
-                pbar.set_postfix({"Loss": f"{loss}"})
+                # pbar.set_postfix({"Loss": f"{loss}"})
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
