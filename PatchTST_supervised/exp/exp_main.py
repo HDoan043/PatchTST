@@ -373,6 +373,6 @@ class Exp_Main(Exp_Basic):
             os.makedirs(folder_path)
         np.save(folder_path + 'real_prediction.npy', preds)
 
-        print("Predict result is saved in {}".format(folder_path + 'real_prediction.npy')
+        print("Predict result is saved in {}".format(folder_path + 'real_prediction.npy'))
 
         return preds
