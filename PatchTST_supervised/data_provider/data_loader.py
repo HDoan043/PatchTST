@@ -273,11 +273,11 @@ class Dataset_Custom(Dataset):
         
         # print(cols)
         '''
-        Chia train, validate và test ( train: 0.7, validate: 0.1, test: 0.2)
+        Chia train, validate và test ( train: 0.7, validate: 0.15, test: 0.15)
         '''
         # Xác định số lượng mỗi tập
         num_train = int(len(df_raw) * 0.7)
-        num_test = int(len(df_raw) * 0.2)
+        num_test = int(len(df_raw) * 0.15)
         num_vali = len(df_raw) - num_train - num_test
         # Xác định index đầu và cuối mỗi tập
         border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
