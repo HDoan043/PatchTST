@@ -365,6 +365,7 @@ class Exp_Main(Exp_Basic):
                 preds.append(pred)
 
         preds = np.array(preds)
+        preds = pred_data.inverse_transform(preds)
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
 
         # result save
