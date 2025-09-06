@@ -362,10 +362,10 @@ class Exp_Main(Exp_Basic):
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 pred = outputs.detach().cpu().numpy()  # .squeeze()
+                pred = pred_data.inverse_transform(pred)
                 preds.append(pred)
 
         preds = np.array(preds)
-        preds = pred_data.inverse_transform(preds)
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
 
         # result save
