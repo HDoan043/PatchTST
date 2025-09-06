@@ -231,7 +231,7 @@ class Exp_Main(Exp_Basic):
         
         if test:
             print('loading model')
-            self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+            self.model.load_state_dict(torch.load(os.path.join(self.args.checkpoints, setting, 'checkpoint.pth')))
 
         preds = []
         trues = []
@@ -327,7 +327,7 @@ class Exp_Main(Exp_Basic):
 
         if load:
             path = os.path.join(self.args.checkpoints, setting)
-            best_model_path = path + '/' + 'checkpoint.pth'
+            best_model_path = os.path.join(path,'checkpoint.pth')
             self.model.load_state_dict(torch.load(best_model_path))
 
         preds = []
