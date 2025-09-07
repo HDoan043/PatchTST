@@ -204,7 +204,20 @@ class Learner(GetAttr):
            
     def predict_step(self, batch):
         # get the inputs
-        self.xb, self.yb = batch
+        xb, yb = batch
+
+        if isinstance(xb, (list, tuple)): xb = xb[0]
+        if isinstance(yb, (list, tuple)): yb = yb[0]
+
+        import torch
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if isinstance(xb, (np.ndarray,)):
+            xb = torch.from_numpy(xb).to(device)
+        if yb is not None and isinstance(yb, (np.ndarray,)):
+            yb = torch.from_numpy(yb).to(self.device)
+
+        self.xb = xb
+        self.yb = yb
         # forward
         pred = self.model_forward()
         return pred 
