@@ -244,9 +244,6 @@ class Learner(GetAttr):
         test_dl = self._prepare_data(test_data, Dataset, Dataloader, batch_size)
         self._predict(test_dl)
         self.preds = cb.preds
-        save_result = '/kaggle/working/result/'
-        os.makedirs(save_result, exist_ok = True)
-        np.save(os.path.join(save_result, "fine-tune_result.npy"), to_numpy(self.preds))
         
         return to_numpy(self.preds) 
    
