@@ -233,7 +233,7 @@ if __name__ == '__main__':
             predict = predict_func(args.save_path+args.save_finetuned_model)
             save_result = args.save_result
             os.makedirs(save_result, exist_ok = True)
-            np.save(os.path.join(save_result, "fine-tune_result.npy"), predict))
+            np.save(os.path.join(save_result, "fine-tune_result.npy"), predict)
         print('----------- Complete! -----------')
 
     elif args.is_linear_probe:
