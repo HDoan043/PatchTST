@@ -359,9 +359,10 @@ class Dataset_Pred(Dataset):
         if self.features == 'M' or self.features == 'MS':
             cols_data = df_raw.columns[1:]
             df_data = df_raw[cols_data]
+            self.n_inp = len(cols_data)
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
-
+            self.n_inp = 1
         if self.scale:
             self.scaler.fit(df_data.values)
             data = self.scaler.transform(df_data.values)
