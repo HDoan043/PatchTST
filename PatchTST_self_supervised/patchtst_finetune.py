@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--is_finetune', type=int, default=0, help='do finetuning or not')
 parser.add_argument('--do_predict', type=int, default=0)
 parser.add_argument('--is_linear_probe', type=int, default=0, help='if linear_probe: only finetune the last layer')
+parser.add_argument('--data_path', type=str, default = '/kaggle/working/new_csv_file/train.csv')
 # Dataset and dataloader
 parser.add_argument('--dset_finetune', type=str, default='etth1', help='dataset name')
 parser.add_argument('--context_points', type=int, default=512, help='sequence length')
@@ -214,7 +215,8 @@ def predict_func(weight_path):
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
     # predict
-    test_array = np.array([x[0] for x in dls.test])
+    df = pd.read_csv(args.data_path)
+    test_array = np.array(df["number_sold"].to_list())
     predict = learn.predict(test_array, weight_path = weight_path + '.pth')
     return predict
 
