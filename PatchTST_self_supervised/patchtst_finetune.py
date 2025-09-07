@@ -232,7 +232,7 @@ def predict_func(weight_path):
                     batch_size = args.batch_size,
                     num_workers = args.num_workers
                 )
-    predict = learn.predict(data_loader, weight_path = weight_path + '.pth')
+    predict = learn.predict(dataloader, weight_path = weight_path + '.pth')
     return predict
 
 
