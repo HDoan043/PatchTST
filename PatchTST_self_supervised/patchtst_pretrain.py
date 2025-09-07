@@ -52,7 +52,7 @@ parser.add_argument('--model_type', type=str, default='based_model', help='for m
 args = parser.parse_args()
 print('args:', args)
 args.save_pretrained_model = 'patchtst_pretrained_cw'+str(args.context_points)+'_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-pretrain' + str(args.n_epochs_pretrain) + '_mask' + str(args.mask_ratio)  + '_model' + str(args.pretrained_model_id)
-args.save_path = 'saved_models/' + args.dset_pretrain + '/masked_patchtst/' + args.model_type + '/'
+args.save_path = '/kaggle/working/checkpoints/saved_models/' + args.dset_pretrain + '/masked_patchtst/' + args.model_type + '/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
 
