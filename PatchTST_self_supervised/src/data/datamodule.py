@@ -1,7 +1,7 @@
 import warnings
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 
 class DataLoaders:
@@ -63,13 +63,7 @@ class DataLoaders:
 
     def add_dl(self, test_data, batch_size=None, **kwargs):
         # check of test_data is already a DataLoader
-        try:
-            from ray.train.torch import _WrappedDataLoader
-            ray_loader_type = _WrappedDataLoader
-        except ImportError:
-            ray_loader_type = ()
-            
-        if isinstance(test_data, (DataLoader, ray_loader_type)): 
+        if isinstance(test_data, DataLoader): 
             return test_data
 
         # get batch_size if not defined
