@@ -214,7 +214,7 @@ def predict_func(weight_path):
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
     # predict
-    predict = learn.predict(dls.test, weight_path = weight_path)
+    predict = learn.predict(dls.test, weight_path = weight_path + '.pth')
     return predict
 
 
