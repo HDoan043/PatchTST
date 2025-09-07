@@ -10,8 +10,7 @@ from src.data.datamodule import DataLoaders
 from src.data.pred_dataset import *
 
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
-         'traffic', 'illness', 'weather', 'exchange'
-        ]
+         'traffic', 'illness', 'weather', 'exchange', 'custom']
 
 def get_dls(params):
     
@@ -33,17 +32,32 @@ def get_dls(params):
                 },
                 batch_size=params.batch_size,
                 workers=params.num_workers,
-                )
-
-
-    elif params.dset == 'ettm2':
+        )
+    if params.dset == 'ettm1':
         root_path = '/data/datasets/public/ETDataset/ETT-small/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_ETT_minute,
                 dataset_kwargs={
                 'root_path': root_path,
-                'data_path': 'ETTm2.csv',
+                'data_path': 'ETTm1.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+        )
+    
+    elif params.dset == 'custom':
+        root_path = '/kaggle/working/new_csv_file/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'train.csv',
                 'features': params.features,
                 'scale': True,
                 'size': size,
