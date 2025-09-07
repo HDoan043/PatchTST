@@ -234,6 +234,7 @@ class Dataset_Custom(Dataset):
 
         self.root_path = root_path
         self.data_path = data_path
+    
         self.__read_data__()
 
     def __read_data__(self):
@@ -259,9 +260,11 @@ class Dataset_Custom(Dataset):
 
         if self.features == 'M' or self.features == 'MS':
             cols_data = df_raw.columns[1:]
+            self.n_inp = len(cols_data)
             df_data = df_raw[cols_data]
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
+            self.n_inp = 1
 
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
