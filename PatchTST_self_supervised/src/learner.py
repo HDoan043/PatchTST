@@ -180,6 +180,9 @@ class Learner(GetAttr):
         return pred, loss
 
     def model_forward(self):
+        if isinstance(self.xb, (tuple, list)):
+            self.xb = self.xb[0]
+        self.xb = self.xb.float()
         self('before_forward')
         self.pred = self.model(self.xb)
         self('after_forward')
