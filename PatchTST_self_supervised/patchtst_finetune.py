@@ -21,6 +21,7 @@ import argparse
 parser = argparse.ArgumentParser()
 # Pretraining and Finetuning
 parser.add_argument('--is_finetune', type=int, default=0, help='do finetuning or not')
+parser.add_argument('--do_predict', type=int, default=0)
 parser.add_argument('--is_linear_probe', type=int, default=0, help='if linear_probe: only finetune the last layer')
 # Dataset and dataloader
 parser.add_argument('--dset_finetune', type=str, default='etth1', help='dataset name')
@@ -203,6 +204,17 @@ def test_func(weight_path):
     pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_finetuned_model + '_acc.csv', float_format='%.6f', index=False)
     return out
 
+def predict_func(weight_path):
+    # get dataloader
+    dls = get_dls(args)
+    model = get_model(dls.vars, args, head_type='prediction').to('cuda')
+    # get callbacks
+    cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
+    cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
+    learn = Learner(dls, model,cbs=cbs)
+    # predict
+    predict = learn.predict(dls.test, weight_path = weight_path)
+    return predict
 
 
 if __name__ == '__main__':
@@ -214,7 +226,13 @@ if __name__ == '__main__':
         finetune_func(suggested_lr)        
         print('finetune completed')
         # Test
-        out = test_func(args.save_path+args.save_finetuned_model)         
+        out = test_func(args.save_path+args.save_finetuned_model)
+
+        if args.do_predict:
+            predict = predict_func(args.save_path+args.save_finetuned_model)
+            save_result = args.save_result
+            os.makedirs(save_result, exist_ok = True)
+            np.save(os.path.join(save_result, "fine-tune_result.npy"), predict))
         print('----------- Complete! -----------')
 
     elif args.is_linear_probe:
