@@ -63,8 +63,13 @@ class DataLoaders:
 
     def add_dl(self, test_data, batch_size=None, **kwargs):
         # check of test_data is already a DataLoader
-        from ray.train.torch import _WrappedDataLoader
-        if isinstance(test_data, DataLoader) or isinstance(test_data, _WrappedDataLoader): 
+        try:
+            from ray.train.torch import _WrappedDataLoader
+            ray_loader_type = _WrappedDataLoader
+        except ImportError:
+            ray_loader_type = ()
+            
+        if isinstance(test_data, (DataLoader, ray_loader_type)): 
             return test_data
 
         # get batch_size if not defined
