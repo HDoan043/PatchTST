@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
 
 from src.models.patchTST import PatchTST
 from src.learner import Learner, transfer_weights
@@ -15,7 +16,7 @@ from src.callback.transforms import *
 from src.metrics import *
 from src.basics import set_device
 from datautils import *
-
+from src.data.pred_dataset import *
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -23,7 +24,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--is_finetune', type=int, default=0, help='do finetuning or not')
 parser.add_argument('--do_predict', type=int, default=0)
 parser.add_argument('--is_linear_probe', type=int, default=0, help='if linear_probe: only finetune the last layer')
-parser.add_argument('--data_path', type=str, default = '/kaggle/working/new_csv_file/train.csv')
+parser.add_argument('--data_path', type=str, default = 'train.csv')
+parser.add_argument('--root_path', type = str, default='/kaggle/working/new_csv_file/')
 # Dataset and dataloader
 parser.add_argument('--dset_finetune', type=str, default='etth1', help='dataset name')
 parser.add_argument('--context_points', type=int, default=512, help='sequence length')
@@ -215,9 +217,22 @@ def predict_func(weight_path):
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
     # predict
-    df = pd.read_csv(args.data_path)
-    test_array = np.array(df["number_sold"].to_list())
-    predict = learn.predict(test_array, weight_path = weight_path + '.pth')
+    # Create DataLoader fore Dataset_Pred
+    pred_dataset = Dataset_Pred(
+                    root_path = args.root_path,
+                    size = [args.context_points, 0, args.target_points],
+                    features = 'S',
+                    data_path = args.data_path,
+                    target = 'number_sold',
+                    scale = False,
+                    freq = 'd')
+    dataloader = DataLoader(
+                    pred_dataset,
+                    shuffle = False,
+                    batch_size = args.batch_size,
+                    num_workers = args.num_workers
+                )
+    predict = learn.predict(data_loader, weight_path = weight_path + '.pth')
     return predict
 
 
