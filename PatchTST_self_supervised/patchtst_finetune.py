@@ -22,7 +22,7 @@ import argparse
 parser = argparse.ArgumentParser()
 # Pretraining and Finetuning
 parser.add_argument('--is_finetune', type=int, default=0, help='do finetuning or not')
-parser.add_argument('--save_path', type=str, default='/kaggle/wokring/checkpoints/', help='saving model path)
+parser.add_argument('--save_path', type=str, default='/kaggle/working/checkpoints/', help='saving model path')
 parser.add_argument('--do_predict', type=int, default=0, help='do predict after finetune or not')
 parser.add_argument('--is_linear_probe', type=int, default=0, help='if linear_probe: only finetune the last layer')
 parser.add_argument('--data_path', type=str, default = 'train.csv')
