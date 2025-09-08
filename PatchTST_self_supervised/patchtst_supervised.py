@@ -154,9 +154,9 @@ def test_func():
 def predict_func(weight_path):
     # get dataloader
     dls = get_dls(args)
-    model = get_model(dls.vars, args, head_type='prediction').to('cuda')
+    model = get_model(dls.vars, args)
     # get callbacks
-    cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
+    cbs = [RevInCB(dls.vars)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
     # predict
