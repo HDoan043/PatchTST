@@ -51,9 +51,11 @@ parser.add_argument('--model_type', type=str, default='based_model', help='for m
 # training
 parser.add_argument('--is_train', type=int, default=1, help='training the model')
 parser.add_argument('--save_path', type=str, default='/kaggle/working/checkpoints/', help='saving model path')
+# predict
 parser.add_argument('--do_predict', type=int, default = 0, help='predict after training or not')
 parser.add_argument('--root_path', type=str, default = '/kaggle/working/new_csv_file/')
 parser.add_argument('--data_path', type=str, default = 'train.csv' )
+parser.add_argument('--save_result', type=str, default = '/kaggle/working/result/self_supervised/')
 
 
 args = parser.parse_args()
