@@ -42,7 +42,7 @@ parser.add_argument('--n_heads', type=int, default=16, help='number of Transform
 parser.add_argument('--d_model', type=int, default=128, help='Transformer d_model')
 parser.add_argument('--d_ff', type=int, default=256, help='Tranformer MLP dimension')
 parser.add_argument('--dropout', type=float, default=0.2, help='Transformer dropout')
-parser.add_argument('--head_dropout', type=float, default=0, help='head dropout')
+parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
 # Optimization args
 parser.add_argument('--n_epochs', type=int, default=20, help='number of training epochs')
 parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
