@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
 
 from src.models.patchTST import PatchTST
 from src.learner import Learner
@@ -49,12 +50,15 @@ parser.add_argument('--model_id', type=int, default=1, help='id of the saved mod
 parser.add_argument('--model_type', type=str, default='based_model', help='for multivariate model or univariate model')
 # training
 parser.add_argument('--is_train', type=int, default=1, help='training the model')
+parser.add_argument('--save_path', type=str, default='/kaggle/working/checkpoints/', help='saving model path')
+parser.add_argument('--do_predict', type=int, default = 0, help='predict after training or not')
+parser.add_argument('--root_path', type=str, default = '/kaggle/working/new_csv_file/')
+parser.add_argument('--data_path', type=str, default = 'train.csv' )
 
 
 args = parser.parse_args()
 print('args:', args)
 args.save_model_name = 'patchtst_supervised'+'_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride)+'_epochs'+str(args.n_epochs) + '_model' + str(args.model_id)
-args.save_path = 'saved_models/' + args.dset + '/patchtst_supervised/' + args.model_type + '/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
 
@@ -145,6 +149,32 @@ def test_func():
     out  = learn.test(dls.test, weight_path=weight_path, scores=[mse,mae])         # out: a list of [pred, targ, score_values]
     return out
 
+def predict_func(weight_path):
+    # get dataloader
+    dls = get_dls(args)
+    model = get_model(dls.vars, args, head_type='prediction').to('cuda')
+    # get callbacks
+    cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
+    cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
+    learn = Learner(dls, model,cbs=cbs)
+    # predict
+    # Create DataLoader fore Dataset_Pred
+    pred_dataset = Dataset_Pred(
+                    root_path = args.root_path,
+                    size = [args.context_points, 0, args.target_points],
+                    features = 'S',
+                    data_path = args.data_path,
+                    target = 'number_sold',
+                    scale = False,
+                    freq = 'd')
+    dataloader = DataLoader(
+                    pred_dataset,
+                    shuffle = False,
+                    batch_size = args.batch_size,
+                    num_workers = args.num_workers
+                )
+    predict = learn.predict(dataloader, weight_path = weight_path + '.pth')
+    return predict
 
 if __name__ == '__main__':
 
@@ -152,6 +182,13 @@ if __name__ == '__main__':
         suggested_lr = find_lr()
         print('suggested lr:', suggested_lr)
         train_func(suggested_lr)
+
+        if args.do_predict:
+            predict = predict_func(args.save_path+args.save_finetuned_model)
+            save_result = args.save_result
+            os.makedirs(save_result, exist_ok = True)
+            np.save(os.path.join(save_result, "fine-tune_result.npy"), predict)
+            
     else:   # testing mode
         out = test_func()
         print('score:', out[2])
