@@ -15,6 +15,7 @@ from src.callback.scheduler import *
 from src.callback.patch_mask import *
 from src.callback.transforms import *
 from src.metrics import *
+from src.data.pred_dataset import *
 from datautils import get_dls
 
 
