@@ -34,9 +34,6 @@ class Exp_Main(Exp_Basic):
             'Linear': Linear,
             'PatchTST': PatchTST,
         }
-        print(self.args.enc_in)
-        print(self.args.dec_in)
-        print(self.args.c_out)
         model = model_dict[self.args.model].Model(self.args).float()
 
         if self.args.use_multi_gpu and self.args.use_gpu:
