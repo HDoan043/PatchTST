@@ -177,6 +177,9 @@ class Exp_Main(Exp_Basic):
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                             
                         else:
+                            print("batch x: {}".format(batch_x.shape))
+                            print("batch y: {}".format(batch_y.shape))
+                            print("dec_inp: {}".format(dec_inp))
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
                     # print(outputs.shape,batch_y.shape)
                     f_dim = -1 if self.args.features == 'MS' else 0
