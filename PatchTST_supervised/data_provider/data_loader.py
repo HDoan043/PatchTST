@@ -267,9 +267,13 @@ class Dataset_Custom(Dataset):
         df_raw.columns: ['date', ...(other features), target feature]
         '''
         cols = list(df_raw.columns)
-        cols.remove(self.target)
+        if self.target in cols :
+            cols.remove(self.target)
         cols.remove('date')
-        df_raw = df_raw[['date'] + cols + [self.target]]
+        if self.target in cols:
+            df_raw = df_raw[['date'] + cols + [self.target]]
+
+        else: df_raw = df_raw[['date'] + cols]
         
         # print(cols)
         '''
