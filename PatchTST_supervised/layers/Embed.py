@@ -29,6 +29,7 @@ class TokenEmbedding(nn.Module):
     def __init__(self, c_in, d_model):
         super(TokenEmbedding, self).__init__()
         padding = 1 if torch.__version__ >= '1.5.0' else 2
+        print("DEBUG TokenEmbedding --> Initialize Conv1d: in_channels: {}, out_channels: {}, kernal: {}".format(c_in, d_model, 3))
         self.tokenConv = nn.Conv1d(in_channels=c_in, out_channels=d_model,
                                    kernel_size=3, padding=padding, padding_mode='circular', bias=False)
         for m in self.modules():
@@ -107,6 +108,7 @@ class DataEmbedding(nn.Module):
     def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
         super(DataEmbedding, self).__init__()
 
+        print("DEBUG DataEmbedding --> Initialize TokenEmbedding: c_in = {}, d_model = {}".format(c_in, d_model))
         self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
         self.position_embedding = PositionalEmbedding(d_model=d_model)
         self.temporal_embedding = TemporalEmbedding(d_model=d_model, embed_type=embed_type,
