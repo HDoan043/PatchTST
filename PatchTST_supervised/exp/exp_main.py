@@ -34,10 +34,10 @@ class Exp_Main(Exp_Basic):
             'Linear': Linear,
             'PatchTST': PatchTST,
         }
-        print("----DEBUG INITIALIZE MODEL----")
-        print("DEBUG Exp_main --> initialize Transformer: enc_in: {}, dec_in: {}".format(self.args.enc_in, self.args.dec_in))
+        # print("----DEBUG INITIALIZE MODEL----")
+        # print("DEBUG Exp_main --> initialize Transformer: enc_in: {}, dec_in: {}".format(self.args.enc_in, self.args.dec_in))
         model = model_dict[self.args.model].Model(self.args).float()
-        print("----END DEBUG INITIALIZATION----")
+        # print("----END DEBUG INITIALIZATION----")
 
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
@@ -178,10 +178,10 @@ class Exp_Main(Exp_Basic):
                             
                         else:
                             print()
-                            print("----DEBUG FORWARDING MODEL----")
-                            print("DEBUG Exp_main --> pass to Transformer: batch_x: {}, batch_y: {}".format(batch_x.shape, batch_y.shape))
+                            # print("----DEBUG FORWARDING MODEL----")
+                            # print("DEBUG Exp_main --> pass to Transformer: batch_x: {}, batch_y: {}".format(batch_x.shape, batch_y.shape))
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
-                            print("----END DEBUG FORWARDING MODEL----")
+                            # print("----END DEBUG FORWARDING MODEL----")
                     # print(outputs.shape,batch_y.shape)
                     f_dim = -1 if self.args.features == 'MS' else 0
                     outputs = outputs[:, -self.args.pred_len:, f_dim:]
