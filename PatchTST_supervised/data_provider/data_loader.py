@@ -377,12 +377,17 @@ class Dataset_Pred(Dataset):
         '''
         if self.cols:
             cols = self.cols.copy()
-            cols.remove(self.target)
+            if self.target in self.cols:
+                cols.remove(self.target)
         else:
             cols = list(df_raw.columns)
-            cols.remove(self.target)
+            if self.target in self.cols:
+                cols.remove(self.target)
             cols.remove('date')
-        df_raw = df_raw[['date'] + cols + [self.target]]
+        if self.target in self.cols:
+            df_raw = df_raw[['date'] + cols + [self.target]]
+        else:
+            df_raw = df_raw[['date'] + cols]
         border1 = len(df_raw) - self.seq_len
         border2 = len(df_raw)
 
