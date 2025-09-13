@@ -177,7 +177,7 @@ class Exp_Main(Exp_Basic):
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                             
                         else:
-                            print()
+                            # print()
                             # print("----DEBUG FORWARDING MODEL----")
                             # print("DEBUG Exp_main --> pass to Transformer: batch_x: {}, batch_y: {}".format(batch_x.shape, batch_y.shape))
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
