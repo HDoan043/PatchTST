@@ -37,7 +37,7 @@ class Exp_Main(Exp_Basic):
         print("----DEBUG INITIALIZE MODEL----")
         print("DEBUG Exp_main --> initialize Transformer: enc_in: {}, dec_in: {}".format(args.enc_in, args.dec_in))
         model = model_dict[self.args.model].Model(self.args).float()
-        print("----END DEBUG INITIALIZATION----"
+        print("----END DEBUG INITIALIZATION----")
 
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
