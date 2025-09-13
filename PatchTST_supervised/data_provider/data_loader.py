@@ -377,11 +377,11 @@ class Dataset_Pred(Dataset):
         '''
         if self.cols:
             cols = self.cols.copy()
-            if self.target in self.cols:
+            if self.target in cols:
                 cols.remove(self.target)
         else:
             cols = list(df_raw.columns)
-            if self.target in self.cols:
+            if self.target cols:
                 cols.remove(self.target)
             cols.remove('date')
         if self.target in self.cols:
