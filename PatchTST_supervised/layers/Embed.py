@@ -115,7 +115,7 @@ class DataEmbedding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, x_mark):
-        print("DEBUG DataEmbedding --> pass to TokenEmbedding: {}".format(x.shape)
+        print("DEBUG DataEmbedding --> pass to TokenEmbedding: {}".format(x.shape))
         x = self.value_embedding(x) + self.temporal_embedding(x_mark) + self.position_embedding(x)
         return self.dropout(x)
 
