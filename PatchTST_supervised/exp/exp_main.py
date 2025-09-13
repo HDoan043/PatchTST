@@ -35,7 +35,7 @@ class Exp_Main(Exp_Basic):
             'PatchTST': PatchTST,
         }
         print("----DEBUG INITIALIZE MODEL----")
-        print("DEBUG Exp_main --> initialize Transformer: enc_in: {}, dec_in: {}".format(args.enc_in, args.dec_in))
+        print("DEBUG Exp_main --> initialize Transformer: enc_in: {}, dec_in: {}".format(self.args.enc_in, self.args.dec_in))
         model = model_dict[self.args.model].Model(self.args).float()
         print("----END DEBUG INITIALIZATION----")
 
