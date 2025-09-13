@@ -375,16 +375,19 @@ class Dataset_Pred(Dataset):
         '''
         df_raw.columns: ['date', ...(other features), target feature]
         '''
+        target = 0
         if self.cols:
             cols = self.cols.copy()
             if self.target in cols:
                 cols.remove(self.target)
+                target = 1
         else:
             cols = list(df_raw.columns)
-            if self.target cols:
+            if self.target in cols:
                 cols.remove(self.target)
+                target = 1
             cols.remove('date')
-        if self.target in self.cols:
+        if target:
             df_raw = df_raw[['date'] + cols + [self.target]]
         else:
             df_raw = df_raw[['date'] + cols]
