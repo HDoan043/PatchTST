@@ -237,7 +237,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                 emb = emb.to(torch.device("cpu"))                                # this is because list is in cpu, not cuda
                 u_ls.append(emb)                                                 # u_ls: [len_ratio_patches x [bs * nvars x patch_num x d_model]]
             
-            u = torch.Tensor(u_ls)                                               # u: [len_ratio_patches x bs * nvars x patch_num x d_model]
+            u = torch.tensor(u_ls)                                               # u: [len_ratio_patches x bs * nvars x patch_num x d_model]
             u = u.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
             u = u.permute(1,2,3,0)                                               # u: [bs *nvars x patch_num x d_model x len_ratio_patches]
             u = self.combination(u)                                              # u: [bs *nvars x patch_num x d_model x 1]
