@@ -85,7 +85,7 @@ class PatchTST_backbone(nn.Module):
                                 pe=pe, learn_pe=learn_pe, verbose=verbose, multi_patches = multi_patches, **kwargs)
 
         # Head
-        self.head_nf = d_model * patch_num
+        self.head_nf = d_model * patch_num if not multi_patches else d_model * patch_num[0]
         self.n_vars = c_in
         self.pretrain_head = pretrain_head
         self.head_type = head_type
