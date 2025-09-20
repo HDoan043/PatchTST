@@ -116,6 +116,7 @@ class PatchTST_backbone(nn.Module):
                 tem = tem.permute(0,1,3,2)                                                      # tem: [bs x nvars x patch_num x patch_len]
                 tem = tem.to(torch.device("cpu"))                                               # this is because list is in cpu, not cuda
                 z.append(tem)                                                                   # z: [len_ratio_patches x [bs x nvars x patch_num_i x patch_len_i]]
+            self.backbone = self.backbone.to(torch.device("cpu"))
             
         else:
             z = z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
