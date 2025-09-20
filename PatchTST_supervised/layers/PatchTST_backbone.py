@@ -12,6 +12,7 @@ import numpy as np
 from layers.PatchTST_layers import *
 from layers.RevIN import RevIN
 
+ratio_patches = [1,1.5,2,2.5,3]
 # Cell
 class PatchTST_backbone(nn.Module):
     def __init__(self, c_in:int, 
@@ -47,7 +48,9 @@ class PatchTST_backbone(nn.Module):
                  revin = True, 
                  affine = True, 
                  subtract_last = False,
-                 verbose:bool=False, **kwargs):
+                 verbose:bool=False, 
+                 multi_patches = False,
+                 **kwargs):
         
         super().__init__()
         
@@ -59,7 +62,14 @@ class PatchTST_backbone(nn.Module):
         self.patch_len = patch_len
         self.stride = stride
         self.padding_patch = padding_patch
-        patch_num = int((context_window - patch_len)/stride + 1)
+        self.multi_patches = multi_patches
+        if self.multi_patches:
+            self.patch_len = [int(patch_len * ratio) for ratio in ratio_patches]
+            patch_len = self.patch_len
+            patch_num = [int((context_window - each)/stride + 1) for each in self.patch_len]
+        else:
+            patch_num = int((context_window - patch_len)/stride + 1)
+            
         if padding_patch == 'end': # can be modified to general case
             self.padding_patch_layer = nn.ReplicationPad1d((0, stride)) 
             patch_num += 1
@@ -69,7 +79,7 @@ class PatchTST_backbone(nn.Module):
                                 n_layers=n_layers, d_model=d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff,
                                 attn_dropout=attn_dropout, dropout=dropout, act=act, key_padding_mask=key_padding_mask, padding_var=padding_var,
                                 attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
-                                pe=pe, learn_pe=learn_pe, verbose=verbose, **kwargs)
+                                pe=pe, learn_pe=learn_pe, verbose=verbose, multi_patches = multi_patches, **kwargs)
 
         # Head
         self.head_nf = d_model * patch_num
@@ -94,8 +104,18 @@ class PatchTST_backbone(nn.Module):
         # do patching
         if self.padding_patch == 'end':
             z = self.padding_patch_layer(z)
-        z = z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
-        z = z.permute(0,1,3,2)                                                              # z: [bs x nvars x patch_len x patch_num]
+        if self.multi_patches:
+            old_z = z
+            z = []
+            for patch in self.patches:
+                tem = old_z
+                tem = tem.unfold(dimension = -1, size = patch, step = self.stride)
+                tem = tem.permute(0,1,3,2)                                                      # tem: [bs x nvars x patch_num x patch_len]
+                z.append(tem)                                                                   # z: [len_ratio_patches x [bs x nvars x patch_num_i x patch_len_i]]
+            
+        else:
+            z = z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
+            z = z.permute(0,1,3,2)                                                              # z: [bs x nvars x patch_len x patch_num]
         
         # model
         z = self.backbone(z)                                                                # z: [bs x nvars x d_model x patch_num]
@@ -157,21 +177,31 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
                  d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
                  key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False,
-                 pe='zeros', learn_pe=True, verbose=False, **kwargs):
+                 pe='zeros', learn_pe=True, verbose=False, multi_patches = False, **kwargs):
         
         
         super().__init__()
         
-        self.patch_num = patch_num
-        self.patch_len = patch_len
-        
+        self.patch_num = patch_num                        # self.patch_num : int if not multi_patches, list of int else
+        self.patch_len = patch_len                        # self.patch_len : int if not multi_patches, list of int else
+        self.multi_patches = multi_patches
         # Input encoding
         q_len = patch_num
-        self.W_P = nn.Linear(patch_len, d_model)        # Eq 1: projection of feature vectors onto a d-dim vector space
-        self.seq_len = q_len
+        if self.multi_patches:
+            self.W_P_list = [nn.Linear(patch_length, d_model) for patch_length in self.patch_len]      # [patch_num_i x patch_len_i ] --> [patch_num_i x d_model]
+            self.seq_len = q_len
+            
+            # Positional encoding
+            self.W_pos_list = [positional_encoding(pe, learn_pe, each, d_model) for each in q_len]     
+            final_patch_num = patch_num[0]
+            self.reshape_patch_list = [nn.Linear(p_num, final_patch_num) for p_num in self.patch_num]  # [patch_num_i x d_model] --> [patch_num x d_model]
+            self.combination = nn.Linear(len(q_len), 1)                                                # [patch_num x d_model] --> patch_num x d_model
+        else:
+            self.W_P = nn.Linear(patch_len, d_model)        # Eq 1: projection of feature vectors onto a d-dim vector space
+            self.seq_len = q_len
 
-        # Positional encoding
-        self.W_pos = positional_encoding(pe, learn_pe, q_len, d_model)
+            # Positional encoding
+            self.W_pos = positional_encoding(pe, learn_pe, q_len, d_model)
 
         # Residual dropout
         self.dropout = nn.Dropout(dropout)
@@ -181,15 +211,35 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                                    pre_norm=pre_norm, activation=act, res_attention=res_attention, n_layers=n_layers, store_attn=store_attn)
 
         
-    def forward(self, x) -> Tensor:                                              # x: [bs x nvars x patch_len x patch_num]
+    def forward(self, x) -> Tensor:                                              
         
-        n_vars = x.shape[1]
-        # Input encoding
-        x = x.permute(0,1,3,2)                                                   # x: [bs x nvars x patch_num x patch_len]
-        x = self.W_P(x)                                                          # x: [bs x nvars x patch_num x d_model]
+        if self.multi_patches:                                                   # x: [len_ratio_patches x [bs x nvars x patch_len_i x patch_num_i]] if multi_patches
+            n_vars = x[0].shape[1]
+            x = [each.permute(0,1,3,2) for each in x]                            # x: [len_ratio_patches x [bs x nvars x patch_num_i x patch_len_i]]
+            u_ls = []
+            for project, reshape_patch, positional_encoding, each in list(zip(self.W_p_list, self.reshape_patch_list,self.W_pos_list, x)):
+                projection = project(each)                                        # projection: [bs x nvars x patch_num_i x d_model]
+                emb = torch.reshape(projection, (projection.shape[0]*projection.shape[1], projection.shape[2], projection.shape[3])) # emb: [bs * nvars x patch_num_i x d_model]
+                emb = self.dropout(pos_enc + positonal_encoding)                 # emb: [bs * nvars x patch_num_i x d_model]
+                
+                emb = emb.permute(0,2,1)                                         # emb: [bs * nvars x d_model x patch_num_i]
+                emb = reshape(emb)                                               # emb: [bs * nvars x d_model x patch_num]
+                emb = emb.permute(0,2,1)                                         # emb: [bs * nvars x patch_num x d_model]
+                u_ls.append(emb)                                                 # u_ls: [len_ratio_patches x [bs * nvars x patch_num x d_model]]
+                
+            u = torch.Tensor(u_ls)                                               # u: [len_ratio_patches x bs * nvars x patch_num x d_model]
+            u = u.permute(1,2,3,0)                                               # u: [bs *nvars x patch_num x d_model x len_ratio_patches]
+            u = self.combination(u)                                              # u: [bs *nvars x patch_num x d_model x 1]
+            u = u.squeeze()                                                      # u: [bs *nvars x patch_num x d_model]
 
-        u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))      # u: [bs * nvars x patch_num x d_model]
-        u = self.dropout(u + self.W_pos)                                         # u: [bs * nvars x patch_num x d_model]
+        else:                                                                    # x: [bs x nvars x patch_len x patch_num]
+            n_vars = x.shape[1]
+            # Input encoding
+            x = x.permute(0,1,3,2)                                               # x: [bs x nvars x patch_num x patch_len]
+            x = self.W_P(x)                                                      # x: [bs x nvars x patch_num x d_model]
+    
+            u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))  # u: [bs * nvars x patch_num x d_model]
+            u = self.dropout(u + self.W_pos)                                     # u: [bs * nvars x patch_num x d_model]
 
         # Encoder
         z = self.encoder(u)                                                      # z: [bs * nvars x patch_num x d_model]
