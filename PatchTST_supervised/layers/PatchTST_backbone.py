@@ -116,7 +116,6 @@ class PatchTST_backbone(nn.Module):
                 tem = tem.permute(0,1,3,2)                                                      # tem: [bs x nvars x patch_num x patch_len]
                 tem = tem.to(torch.device("cpu"))                                               # this is because list is in cpu, not cuda
                 z.append(tem)                                                                   # z: [len_ratio_patches x [bs x nvars x patch_num_i x patch_len_i]]
-            self.backbone = self.backbone.to(torch.device("cpu"))
             
         else:
             z = z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
@@ -194,12 +193,15 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
         q_len = patch_num
         if self.multi_patches:
             self.W_P_list = [nn.Linear(patch_length, d_model) for patch_length in self.patch_len]      # [patch_num_i x patch_len_i ] --> [patch_num_i x d_model]
+            self.W_P_list = [projection.to(torch.device("cuda" if torch.cuda.is_available() else "cpu")) for projection in self.W_P_list]
             self.seq_len = q_len
             
             # Positional encoding
-            self.W_pos_list = [positional_encoding(pe, learn_pe, each, d_model) for each in q_len]     
+            self.W_pos_list = [positional_encoding(pe, learn_pe, each, d_model) for each in q_len]
+            self.W_pos_list = [pos_enc.to(torch.device("cuda" if torch.cuda.is_available else "cpu")) for pos_enc in self.W_pos_list]
             final_patch_num = patch_num[0]
             self.reshape_patch_list = [nn.Linear(p_num, final_patch_num) for p_num in self.patch_num]  # [patch_num_i x d_model] --> [patch_num x d_model]
+            self.reshape_patch_list = [reshape_patch.to(torch.device("cuda") if torch.cuda.is_available() else "cpu")) for reshape_patch in self.reshape_patch_list]
             self.combination = nn.Linear(len(q_len), 1)                                                # [patch_num x d_model] --> patch_num x d_model
         else:
             self.W_P = nn.Linear(patch_len, d_model)        # Eq 1: projection of feature vectors onto a d-dim vector space
