@@ -110,7 +110,7 @@ class PatchTST_backbone(nn.Module):
         if self.multi_patches:
             old_z = z
             z = []
-            for patch in self.patches:
+            for patch in self.patch_len:
                 tem = old_z
                 tem = tem.unfold(dimension = -1, size = patch, step = self.stride)
                 tem = tem.permute(0,1,3,2)                                                      # tem: [bs x nvars x patch_num x patch_len]
