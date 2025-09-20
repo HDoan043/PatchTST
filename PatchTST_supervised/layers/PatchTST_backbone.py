@@ -201,7 +201,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             self.W_pos_list = [pos_enc.to(torch.device("cuda" if torch.cuda.is_available else "cpu")) for pos_enc in self.W_pos_list]
             final_patch_num = patch_num[0]
             self.reshape_patch_list = [nn.Linear(p_num, final_patch_num) for p_num in self.patch_num]  # [patch_num_i x d_model] --> [patch_num x d_model]
-            self.reshape_patch_list = [reshape_patch.to(torch.device("cuda") if torch.cuda.is_available() else "cpu")) for reshape_patch in self.reshape_patch_list]
+            self.reshape_patch_list = [reshape_patch.to(torch.device("cuda" if torch.cuda.is_available() else "cpu")) for reshape_patch in self.reshape_patch_list]
             self.combination = nn.Linear(len(q_len), 1)                                                # [patch_num x d_model] --> patch_num x d_model
         else:
             self.W_P = nn.Linear(patch_len, d_model)        # Eq 1: projection of feature vectors onto a d-dim vector space
