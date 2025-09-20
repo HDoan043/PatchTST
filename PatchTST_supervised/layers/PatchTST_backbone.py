@@ -226,10 +226,9 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             u_ls = []
             for project, reshape_patch, positional_encoding, each in list(zip(self.W_P_list, self.reshape_patch_list,self.W_pos_list, x)):
                 each = each.to(torch.device("cuda" if torch.cuda.is_available() else "cpu")) # x received from PatchTST_backbone is list in cpu, each tensor in list is in cpu
-                print(f"Each input sequence in many patches: {each.device}")
                 projection = project(each)                                        # projection: [bs x nvars x patch_num_i x d_model]
                 emb = torch.reshape(projection, (projection.shape[0]*projection.shape[1], projection.shape[2], projection.shape[3])) # emb: [bs * nvars x patch_num_i x d_model]
-                emb = self.dropout(pos_enc + positonal_encoding)                 # emb: [bs * nvars x patch_num_i x d_model]
+                emb = self.dropout(emb + positonal_encoding)                     # emb: [bs * nvars x patch_num_i x d_model]
                 
                 emb = emb.permute(0,2,1)                                         # emb: [bs * nvars x d_model x patch_num_i]
                 emb = reshape_patch(emb)                                         # emb: [bs * nvars x d_model x patch_num]
