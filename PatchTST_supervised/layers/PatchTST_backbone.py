@@ -114,6 +114,7 @@ class PatchTST_backbone(nn.Module):
                 tem = old_z
                 tem = tem.unfold(dimension = -1, size = patch, step = self.stride)
                 tem = tem.permute(0,1,3,2)                                                      # tem: [bs x nvars x patch_num x patch_len]
+                tem = tem.to(torch.device("cpu"))                                               # this is because list is in cpu, not cuda
                 z.append(tem)                                                                   # z: [len_ratio_patches x [bs x nvars x patch_num_i x patch_len_i]]
             
         else:
@@ -221,13 +222,16 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             x = [each.permute(0,1,3,2) for each in x]                            # x: [len_ratio_patches x [bs x nvars x patch_num_i x patch_len_i]]
             u_ls = []
             for project, reshape_patch, positional_encoding, each in list(zip(self.W_P_list, self.reshape_patch_list,self.W_pos_list, x)):
+                each = each.to(torch.device("cuda" if torch.cuda.is_available() else "cpu")) # x received from PatchTST_backbone is list in cpu, each tensor in list is in cpu
                 projection = project(each)                                        # projection: [bs x nvars x patch_num_i x d_model]
                 emb = torch.reshape(projection, (projection.shape[0]*projection.shape[1], projection.shape[2], projection.shape[3])) # emb: [bs * nvars x patch_num_i x d_model]
                 emb = self.dropout(pos_enc + positonal_encoding)                 # emb: [bs * nvars x patch_num_i x d_model]
                 
                 emb = emb.permute(0,2,1)                                         # emb: [bs * nvars x d_model x patch_num_i]
-                emb = reshape(emb)                                               # emb: [bs * nvars x d_model x patch_num]
+                emb = reshape_patch(emb)                                         # emb: [bs * nvars x d_model x patch_num]
                 emb = emb.permute(0,2,1)                                         # emb: [bs * nvars x patch_num x d_model]
+
+                emb = emb.to(torch.device("cpu"))                                # this is because list is in cpu, not cuda
                 u_ls.append(emb)                                                 # u_ls: [len_ratio_patches x [bs * nvars x patch_num x d_model]]
             
             u = torch.Tensor(u_ls)                                               # u: [len_ratio_patches x bs * nvars x patch_num x d_model]
