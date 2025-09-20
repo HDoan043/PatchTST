@@ -72,6 +72,8 @@ class PatchTST_backbone(nn.Module):
             
         if padding_patch == 'end': # can be modified to general case
             self.padding_patch_layer = nn.ReplicationPad1d((0, stride)) 
+            if self.multi_patches:
+                patch_num = [each+1 for each in patch_num]
             patch_num += 1
         
         # Backbone 
