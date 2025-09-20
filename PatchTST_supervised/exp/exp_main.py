@@ -132,7 +132,7 @@ class Exp_Main(Exp_Basic):
                                             epochs = self.args.train_epochs,
                                             max_lr = self.args.learning_rate)
 
-        print("~~~~~ Numbers of trainable parameters: {} ~~~~~".format(sum(p.numel() for p in self.model.parameters() if p.require_grads)))
+        print("~~~~~ Numbers of trainable parameters: {} ~~~~~".format(sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0
