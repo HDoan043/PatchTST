@@ -74,7 +74,8 @@ class PatchTST_backbone(nn.Module):
             self.padding_patch_layer = nn.ReplicationPad1d((0, stride)) 
             if self.multi_patches:
                 patch_num = [each+1 for each in patch_num]
-            patch_num += 1
+            else:
+                patch_num += 1
         
         # Backbone 
         self.backbone = TSTiEncoder(c_in, patch_num=patch_num, patch_len=patch_len, max_seq_len=max_seq_len,
