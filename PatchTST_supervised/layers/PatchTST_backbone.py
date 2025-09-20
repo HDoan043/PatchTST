@@ -220,7 +220,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             n_vars = x[0].shape[1]
             x = [each.permute(0,1,3,2) for each in x]                            # x: [len_ratio_patches x [bs x nvars x patch_num_i x patch_len_i]]
             u_ls = []
-            for project, reshape_patch, positional_encoding, each in list(zip(self.W_p_list, self.reshape_patch_list,self.W_pos_list, x)):
+            for project, reshape_patch, positional_encoding, each in list(zip(self.W_P_list, self.reshape_patch_list,self.W_pos_list, x)):
                 projection = project(each)                                        # projection: [bs x nvars x patch_num_i x d_model]
                 emb = torch.reshape(projection, (projection.shape[0]*projection.shape[1], projection.shape[2], projection.shape[3])) # emb: [bs * nvars x patch_num_i x d_model]
                 emb = self.dropout(pos_enc + positonal_encoding)                 # emb: [bs * nvars x patch_num_i x d_model]
