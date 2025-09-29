@@ -115,7 +115,7 @@ class PatchTST_backbone(nn.Module):
             
             if self.padding_patch == 'end':
                 bs = z.shape[0]
-                reconstruct_z = torch.reshape(reconstruct_z, (reconstruct_z.shape[0]* reconstruct_z.shape[1], reconstructz.shape[2], reconstruct_z.shape[3]))  # z: [bs * nvars x (pred_len+1) x seq_len]
+                reconstruct_z = torch.reshape(reconstruct_z, (reconstruct_z.shape[0]* reconstruct_z.shape[1], reconstruct_z.shape[2], reconstruct_z.shape[3]))  # z: [bs * nvars x (pred_len+1) x seq_len]
                 reconstruct_z = self.padding_patch_layer(reconstruct_z)                                                
                 reconstruct_z = torch.reshape(reconstruct_z, (bs, -1, reconstruct_z.shape[1], reconstruct_z.shape[2]))             # z: [bs x nvars x (pred_len+1) x seq_len]
             gt_reconstruct_z = reconstruct_z.unfold(dimension = -1, size = self.patch_length, step = self.stride)      # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
