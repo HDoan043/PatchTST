@@ -124,8 +124,9 @@ class PatchTST_backbone(nn.Module):
             reconstruct_z = self.reconstruct_head(reconstruct_z)                                                       # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
 
             reconstruct_loss = self.reconstruct_loss(reconstruct_z, gt_reconstruct_z)                                  # reconstruct_loss: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
-            batch_size = reconstruct_loss.shape[0]
-            reconstruct_loss = reconstruct_loss.view(batch_size, -1).mean(dim = 1)                                     # reconstruct_loss: [bs,] 
+            bs, nvars, sn, pn, pl = reconstruct_loss.shape
+            reconstruct_loss = torch.reshape(reconstruct_loss, (bs, nvars*sn*pn*pl))                                   # reconstruct_loss: [bs x nvars * (pred_len + 1) x patch_num x patch_len]
+            reconstruct_loss = reconstruct_loss.mean(dim = 1).squeeze()                                                # reconstruct_loss: [bs]
             
             # FORECASTING
             forecast_z = old_z[:, :, :self.seq_len]
@@ -152,8 +153,9 @@ class PatchTST_backbone(nn.Module):
                 forecast_z = forecast_z.permute(0,2,1)
 
             forecast_loss = self.forecast_loss(forecast_z, gt_forecast_z)                                        # forecast_loss: [bs x nvars x target_window]
-            batch_size = forecast_loss.shape[0]
-            forecast_loss = forecast_loss.view(batch_size, -1).mean(dim = 1)                                     # forecast_loss: ]bs, ]
+            bs, nvars, target_window = forecast_loss.shape
+            forecast_loss = torch.reshape(forecast_loss, (bs, nvars* target_window))                             # forecast_loss: [bs x nvars * target_window]
+            forecast_loss = forecast_loss.mean(dim = 1).squeeze()                                                # forecast_loss: [bs x 1]
             combine_loss = torch.Stack([forecast_loss, reconstruct_loss])                                        # combine_loss: [2 x bs]
             combine_loss = combine_loss.permute(1,0)                                                             # combine_loss: [bs x 2]
 
