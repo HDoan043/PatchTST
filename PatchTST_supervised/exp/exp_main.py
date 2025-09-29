@@ -274,7 +274,7 @@ class Exp_Main(Exp_Basic):
 
         self.model.eval()
         with torch.no_grad():
-            for i,  in enumerate(test_loader):
+            for i, batch in enumerate(test_loader):
                 if self.hybrid:
                     batch_x, batch_y = batch
                     batch_x = batch_x.float().to(self.device)
