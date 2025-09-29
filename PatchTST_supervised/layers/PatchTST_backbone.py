@@ -113,9 +113,9 @@ class PatchTST_backbone(nn.Module):
             old_z = z
             reconstruct_z = old_z.unfold(dimension = -1, size = self.seq_len, step = 1)                        # z: [bs x nvars x (pred_len +1) x seq_len]
             
-            # if self.padding_patch == 'end':
-            #     for i in range(reconstruct_z.shape[2]):
-            #         reconstruct_z[:,:,i] = self.padding_patch_layer(reconstruct_z[i])                                     # z[i]: 
+            if self.padding_patch == 'end':
+                for i in range(len(reconstruct_z)):
+                    reconstruct_z[i] = self.padding_patch_layer(reconstruct_z[i])                                     # z[i]: 
 
             gt_reconstruct_z = reconstruct_z.unfold(dimension = -1, size = self.patch_length, step = self.stride)      # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
             reconstruct_z = self.backbone(gt_reconstruct_z)                                                            # z: [bs x nvars x (pred_len +1) x patch_num x d_model]
