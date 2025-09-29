@@ -535,8 +535,8 @@ class Dataset_Anomaly_Detect(Dataset):
 
         seq = self.data_x[s_begin: s_end]
         if self.set_type == 2:
-            label = self.data_y[s_begin: s_end]                            # label: Series
-            label = label.sum(label > 0) >0                                # if there is at least a anomal time stamp in range, the range is anomal
+            label = self.data_y[s_begin: s_end]                       # label: Series
+            label = (label > 0).sum >0                                # if there is at least a anomal time stamp in range, the range is anomal
             return seq, label
         else: 
             return seq
