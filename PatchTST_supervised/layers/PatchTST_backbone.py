@@ -105,7 +105,7 @@ class PatchTST_backbone(nn.Module):
             self.reconstruct_head = Reconstruct_Head(n_heads, d_model, self.pred_len + 1, patch_len)
             self.reconstruct_loss = nn.MSELoss(reduction = 'none')
             self.forecast_loss = nn.MSELoss(reduction = 'none')
-            self.combine_loss = nn.Linear(2,1)
+            self.combine_loss = HybridLoss()
             
     def forward(self, z):                                                                   # z: [bs x nvars x (seq_len + pred_len)]
         if self.hybrid:
@@ -156,11 +156,9 @@ class PatchTST_backbone(nn.Module):
             bs, nvars, target_window = forecast_loss.shape
             forecast_loss = torch.reshape(forecast_loss, (bs, nvars* target_window))                             # forecast_loss: [bs x nvars * target_window]
             forecast_loss = forecast_loss.mean(dim = 1).squeeze()                                                # forecast_loss: [bs x 1]
-            combine_loss = torch.stack([forecast_loss, reconstruct_loss])                                        # combine_loss: [2 x bs]
-            combine_loss = combine_loss.permute(1,0)                                                             # combine_loss: [bs x 2]
 
             # COMBINING LOSSES
-            combining_loss = self.combine_loss(combine_loss)                                                     # combine_loss: [bs x 1]
+            combining_loss = self.combine_loss(forecast_loss, reconstruct_loss)                                  # combine_loss: [bs x 1]
 
             return combining_loss
 
