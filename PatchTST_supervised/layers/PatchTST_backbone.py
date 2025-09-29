@@ -329,20 +329,17 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             n_vars = x.shape[1]
             # Input encoding
             x = self.W_P(x)                                                      # x: [bs x nvars x (seq_num x ) patch_num x d_model]
-            if self.hybrid:
-                seq_num = x.shape[2]
-                u = u = torch.reshape(x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4]))  # u: [bs * nvars (* seq_num ) x patch_num x d_model]
+            old_shape = x.shape
+            if len(x.shape)==5:
+                u = torch.reshape(x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4]))  # u: [bs * nvars (* seq_num ) x patch_num x d_model]
             else:
                 u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))  # u: [bs * nvars x patch_num x d_model]
             u = self.dropout(u + self.W_pos)                                         # u: [bs * nvars ( * seq_num ) x patch_num x d_model]
 
         # Encoder
         z = self.encoder(u)                                                          # z: [bs * nvars x patch_num x d_model]
-        if self.hybrid:
-            z = torch.reshape(z, (-1, n_vars, seq_num, z.shape[-2], z.shape[-1]))    # z: [bs x nvars x seq_num x patch_num x d_model]
-            
-        else:
-            z = torch.reshape(z, (-1,n_vars,z.shape[-2],z.shape[-1]))                # z: [bs x nvars x patch_num x d_model]
+        z = torch.reshape(z, old_shape)                                              # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
+        if len(old_shape) == 4:
             z = z.permute(0,1,3,2)                                                   # z: [bs x nvars x d_model x patch_num]
         
         return z    
