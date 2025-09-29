@@ -61,19 +61,33 @@ class Exp_Main(Exp_Basic):
         with torch.no_grad():
             # pbar = tqdm(vali_loader)
             # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
-                batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float()
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-                # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
+            for i,  batch in enumerate(vali_loader):
+                if self.hybrid:
+                    batch = batch.float().to(self.device)
+                    output = self.model(batch)
+                    
+                else:
+                    batch_x, batch_y, batch_x_mark, batch_y_mark = batch
+                    batch_x = batch_x.float().to(self.device)
+                    batch_y = batch_y.float()
+    
+                    batch_x_mark = batch_x_mark.float().to(self.device)
+                    batch_y_mark = batch_y_mark.float().to(self.device)
+    
+                    # decoder input
+                    dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
+                    dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+                    # encoder - decoder
+                    if self.args.use_amp:
+                        with torch.cuda.amp.autocast():
+                            if 'Linear' in self.args.model or 'TST' in self.args.model:
+                                outputs = self.model(batch_x)
+                            else:
+                                if self.args.output_attention:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                                else:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                    else:
                         if 'Linear' in self.args.model or 'TST' in self.args.model:
                             outputs = self.model(batch_x)
                         else:
@@ -81,26 +95,18 @@ class Exp_Main(Exp_Basic):
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    if 'Linear' in self.args.model or 'TST' in self.args.model:
-                        outputs = self.model(batch_x)
-                    else:
-                        if self.args.output_attention:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                        else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-
-                pred = outputs.detach().cpu()
-                true = batch_y.detach().cpu()
-
-                loss = criterion(pred, true)
-
-                # pbar.set_postfix({"Loss" : f"{loss}" })
-
-                total_loss.append(loss)
+                    f_dim = -1 if self.args.features == 'MS' else 0
+                    outputs = outputs[:, -self.args.pred_len:, f_dim:]
+                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+    
+                    pred = outputs.detach().cpu()
+                    true = batch_y.detach().cpu()
+    
+                    loss = criterion(pred, true)
+    
+                    # pbar.set_postfix({"Loss" : f"{loss}" })
+    
+                    total_loss.append(loss)
         total_loss = np.average(total_loss)
         self.model.train()
         
@@ -142,14 +148,16 @@ class Exp_Main(Exp_Basic):
             epoch_time = time.time()
             # pbar = tqdm(train_loader, desc = f"Epoch: {epoch}")
             # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, batch) in enumerate(train_loader):
+            for i, batch in enumerate(train_loader):
                 iter_count += 1
                 model_optim.zero_grad()
                 if self.args.hybrid:
                     batch = batch.float().to(self.device)
                     loss = self.model(batch)
+                    loss = torch.mean(loss, dim = 0)
                     train_loss.append(loss.item())
                 else:
+                    batch_x, batch_y, batch_x_mark, batch_y_mark = batch
                     batch_x = batch_x.float().to(self.device)
     
                     batch_y = batch_y.float().to(self.device)
@@ -256,11 +264,15 @@ class Exp_Main(Exp_Basic):
 
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, batch) in enumerate(test_loader):
+            for i,  in enumerate(test_loader):
                 if self.hybrid:
-                    batch = batch.float().to(self.device)
-                    loss = self.model(batch)
+                    batch_x, batch_y = batch
+                    batch_x = batch_x.float().to(self.device)
+                    pred = self.model(batch_x).values > self.threshold
+                    true = batch_y
+                    
                 else: 
+                    batch_x, batch_y, batch_x_mark, batch_y_mark = batch
                     batch_x = batch_x.float().to(self.device)
                     batch_y = batch_y.float().to(self.device)
     
@@ -300,14 +312,14 @@ class Exp_Main(Exp_Basic):
                     pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                     true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
     
-                    preds.append(pred)
-                    trues.append(true)
-                    inputx.append(batch_x.detach().cpu().numpy())
-                    if i % 20 == 0:
-                        input = batch_x.detach().cpu().numpy()
-                        gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
-                        pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
-                        visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
+                preds.append(pred)
+                trues.append(true)
+                inputx.append(batch_x.detach().cpu().numpy())
+                if i % 20 == 0:
+                    input = batch_x.detach().cpu().numpy()
+                    gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
+                    pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
+                    visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
     
             if self.args.test_flop:
                 test_params_flop((batch_x.shape[1],batch_x.shape[2]))
