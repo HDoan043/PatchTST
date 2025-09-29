@@ -69,6 +69,7 @@ class Exp_Main(Exp_Basic):
                     loss = self.model(batch)
                     self.threshold = loss.max() if loss.max() >= self.threshold else self.threshold
                     loss = torch.mean(loss)
+                    loss = loss.detach().cpu()
                     total_loss.append(loss)
 
                 else:
