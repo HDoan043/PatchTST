@@ -215,7 +215,7 @@ class Reconstruct_Head(nn.Module):
         x = x + att                                       # x: [bs * nvars * patch_num x seq_num x d_model]
         x = self.ff(x)                                    # x: [bs * nvars * patch_num x seq_num x d_model]
         x = self.f1(x)                                    # x: [bs * nvars * patch_num x seq_num x d_model]
-        x = x.reconstruct(x)                              # x: [bs * nvars * patch_num x seq_num x patch_len]
+        x = self.reconstruct(x)                           # x: [bs * nvars * patch_num x seq_num x patch_len]
         x = torch.reshape(x, (bs, nvars, pn, sn, -1))     # x: [bs x nvars x patch_num x seq_num x patch_len] 
         x = x.permute(0,1,3,2,4)                          # x: [bs x nvars x seq_num x patch_num x patch_len]
         
