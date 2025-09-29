@@ -282,7 +282,8 @@ class Exp_Main(Exp_Basic):
                 if self.hybrid:
                     batch_x, batch_y = batch
                     batch_x = batch_x.float().to(self.device)
-                    pred = self.model(batch_x).values > self.threshold
+                    loss = self.model(batch_x)
+                    pred = loss.values > self.threshold
                     true = batch_y
                     
                 else: 
