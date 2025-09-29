@@ -38,6 +38,8 @@ class Model(nn.Module):
         stride = configs.stride
         padding_patch = configs.padding_patch
         multi_patches = configs.multi_patches
+        hybrid = configs.hybrid
+        self.hybrid = hybrid
         
         revin = configs.revin
         affine = configs.affine
@@ -49,6 +51,7 @@ class Model(nn.Module):
         
         # model
         self.decomposition = decomposition
+        if self.hybrid: self.decompositio = False
         if self.decomposition:
             self.decomp_module = series_decomp(kernel_size)
             self.model_trend = PatchTST_backbone(c_in=c_in, context_window = context_window, target_window=target_window, patch_len=patch_len, stride=stride, 
@@ -58,7 +61,7 @@ class Model(nn.Module):
                                   attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
-                                  subtract_last=subtract_last, verbose=verbose, multi_patches = multi_patches, **kwargs)
+                                  subtract_last=subtract_last, verbose=verbose, multi_patches = multi_patches, hybrid = hybrid, **kwargs)
             self.model_res = PatchTST_backbone(c_in=c_in, context_window = context_window, target_window=target_window, patch_len=patch_len, stride=stride, 
                                   max_seq_len=max_seq_len, n_layers=n_layers, d_model=d_model,
                                   n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff, norm=norm, attn_dropout=attn_dropout,
@@ -66,7 +69,7 @@ class Model(nn.Module):
                                   attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
-                                  subtract_last=subtract_last, verbose=verbose, multi_patches = multi_patches, **kwargs)
+                                  subtract_last=subtract_last, verbose=verbose, multi_patches = multi_patches, hybrid = hybrid, **kwargs)
         else:
             self.model = PatchTST_backbone(c_in=c_in, context_window = context_window, target_window=target_window, patch_len=patch_len, stride=stride, 
                                   max_seq_len=max_seq_len, n_layers=n_layers, d_model=d_model,
@@ -75,19 +78,25 @@ class Model(nn.Module):
                                   attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
-                                  subtract_last=subtract_last, verbose=verbose, multi_patches = multi_patches, **kwargs)
+                                  subtract_last=subtract_last, verbose=verbose, multi_patches = multi_patches, hybrid = hybrid, **kwargs)
     
     
     def forward(self, x):           # x: [Batch, Input length, Channel]
-        if self.decomposition:
-            res_init, trend_init = self.decomp_module(x)
-            res_init, trend_init = res_init.permute(0,2,1), trend_init.permute(0,2,1)  # x: [Batch, Channel, Input length]
-            res = self.model_res(res_init)
-            trend = self.model_trend(trend_init)
-            x = res + trend
-            x = x.permute(0,2,1)    # x: [Batch, Input length, Channel]
-        else:
+        if self.hybrid:
             x = x.permute(0,2,1)    # x: [Batch, Channel, Input length]
-            x = self.model(x)
-            x = x.permute(0,2,1)    # x: [Batch, Input length, Channel]
-        return x
+            x = self.model(x)       # x: [Batch, 1]
+            x = x.squeeze()         # x: [Batch,]
+            return x
+        else:
+            if self.decomposition:
+                res_init, trend_init = self.decomp_module(x)
+                res_init, trend_init = res_init.permute(0,2,1), trend_init.permute(0,2,1)  # x: [Batch, Channel, Input length]
+                res = self.model_res(res_init)
+                trend = self.model_trend(trend_init)
+                x = res + trend
+                x = x.permute(0,2,1)    # x: [Batch, Input length, Channel]
+            else:
+                x = x.permute(0,2,1)    # x: [Batch, Channel, Input length]
+                x = self.model(x)
+                x = x.permute(0,2,1)    # x: [Batch, Input length, Channel]
+            return x
