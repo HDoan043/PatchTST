@@ -42,3 +42,20 @@ def metric(pred, true):
     corr = CORR(pred, true)
 
     return mae, mse, rmse, mape, mspe, rse, corr
+
+def classification_metric(pred, true):
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+
+    # Confusion matrix
+    TP = np.sum((y_true == 1) & (y_pred == 1))
+    TN = np.sum((y_true == 0) & (y_pred == 0))
+    FP = np.sum((y_true == 0) & (y_pred == 1))
+    FN = np.sum((y_true == 1) & (y_pred == 0))
+    
+    accuracy  = (TP + TN) / (TP + TN + FP + FN + 1e-12)
+    precision = TP / (TP + FP + 1e-12)
+    recall    = TP / (TP + FN + 1e-12)
+    f1        = 2 * precision * recall / (precision + recall + 1e-12)
+
+    return accuracy, precision, recall, f1
