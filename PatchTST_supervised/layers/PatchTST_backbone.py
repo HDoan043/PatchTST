@@ -209,7 +209,7 @@ class Reconstruct_Head(nn.Module):
         self.reconstruct = nn.Linear(d_model, patch_len)
         
     def forward(self, x):                                 # x: [bs x nvars x patch_num x seq_num x d_model]
-        att = self.attention(x)                           # x: [bs x nvars x patch_num x seq_num x d_model]
+        att = self.attention(x,x,x)                       # x: [bs x nvars x patch_num x seq_num x d_model]
         x = x + att                                       # x: [bs x nvars x patch_num x seq_num x d_model]
         x = self.ff(x)                                    # x: [bs x nvars x patch_num x seq_num x d_model]
         x = self.f1(x)                                    # x: [bs x nvars x patch_num x seq_num x d_model]
