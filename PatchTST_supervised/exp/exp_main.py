@@ -117,7 +117,7 @@ class Exp_Main(Exp_Basic):
                     # pbar.set_postfix({"Loss" : f"{loss}" })
     
                     total_loss.append(loss)
-                print()
+            print()
         total_loss = np.average(total_loss)
         self.model.train()
         
