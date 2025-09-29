@@ -44,8 +44,8 @@ def metric(pred, true):
     return mae, mse, rmse, mape, mspe, rse, corr
 
 def classification_metric(pred, true):
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
+    y_true = true
+    y_pred = pred
 
     # Confusion matrix
     TP = np.sum((y_true == 1) & (y_pred == 1))
