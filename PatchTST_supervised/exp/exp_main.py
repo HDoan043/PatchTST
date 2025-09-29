@@ -283,7 +283,7 @@ class Exp_Main(Exp_Basic):
                     batch_x, batch_y = batch
                     batch_x = batch_x.float().to(self.device)
                     loss = self.model(batch_x)
-                    pred = loss.values > self.threshold
+                    pred = loss.values() > self.threshold
                     true = batch_y
                     
                 else: 
