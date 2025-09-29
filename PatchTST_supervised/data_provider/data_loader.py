@@ -499,8 +499,8 @@ class Dataset_Anomaly_Detect(Dataset):
         df_data = df_raw[cols]
         df_label = df_raw[self.target]
 
-        border1_ls = [0, 150000 - 15000, 150000]
-        border2_ls = [150000 - 15000, 150000, -1]
+        border1_ls = [0, 100000 - 10000, 100000]
+        border2_ls = [100000 - 10000, 100000, -1]
 
         border1 = border1_ls[self.set_type]
         border2 = border2_ls[self.set_type]
