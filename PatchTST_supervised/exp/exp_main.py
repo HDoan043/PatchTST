@@ -65,6 +65,8 @@ class Exp_Main(Exp_Basic):
             # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
             for i,  batch in enumerate(vali_loader):
                 if self.hybrid:
+                    if isinstance(batch, list) or isinstance(batch, tuple):
+                        batch = batch[0]
                     batch = batch.float().to(self.device)
                     loss = self.model(batch)
                     self.threshold = loss.max() if loss.max() >= self.threshold else self.threshold
