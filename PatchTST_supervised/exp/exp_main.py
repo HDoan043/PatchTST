@@ -58,6 +58,7 @@ class Exp_Main(Exp_Basic):
     def vali(self, vali_data, vali_loader, criterion):
         total_loss = []
         self.model.eval()
+        self.threshold = 0
         with torch.no_grad():
             # pbar = tqdm(vali_loader)
             # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
@@ -65,9 +66,10 @@ class Exp_Main(Exp_Basic):
                 if self.hybrid:
                     batch = batch.float().to(self.device)
                     loss = self.model(batch)
+                    self.threshold = loss.max() if loss.max() >= self.threshold else self.threshold
                     loss = torch.mean(loss)
                     total_loss.append(loss)
-                    
+
                 else:
                     batch_x, batch_y, batch_x_mark, batch_y_mark = batch
                     batch_x = batch_x.float().to(self.device)
@@ -109,6 +111,7 @@ class Exp_Main(Exp_Basic):
                     # pbar.set_postfix({"Loss" : f"{loss}" })
     
                     total_loss.append(loss)
+        
         total_loss = np.average(total_loss)
         self.model.train()
         
