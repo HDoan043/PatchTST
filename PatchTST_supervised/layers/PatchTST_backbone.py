@@ -209,11 +209,14 @@ class Reconstruct_Head(nn.Module):
         self.reconstruct = nn.Linear(d_model, patch_len)
         
     def forward(self, x):                                 # x: [bs x nvars x patch_num x seq_num x d_model]
-        att = self.attention(x,x,x)                       # x: [bs x nvars x patch_num x seq_num x d_model]
-        x = x + att                                       # x: [bs x nvars x patch_num x seq_num x d_model]
-        x = self.ff(x)                                    # x: [bs x nvars x patch_num x seq_num x d_model]
-        x = self.f1(x)                                    # x: [bs x nvars x patch_num x seq_num x d_model]
-        x = x.reconstruct(x)                              # x: [bs x nvars x patch_num x seq_num x patch_len]
+        bs, nvars, pn, sn, d = x.shape
+        x = torch.reshape(x, (bs*nvars*pn, sn, d ))       # x: [bs * nvars * patch_num x seq_num x d_model]
+        att = self.attention(x,x,x)                       # x: [bs * nvars * patch_num x seq_num x d_model]
+        x = x + att                                       # x: [bs * nvars * patch_num x seq_num x d_model]
+        x = self.ff(x)                                    # x: [bs * nvars * patch_num x seq_num x d_model]
+        x = self.f1(x)                                    # x: [bs * nvars * patch_num x seq_num x d_model]
+        x = x.reconstruct(x)                              # x: [bs * nvars * patch_num x seq_num x patch_len]
+        x = torch.reshape(x, (bs, nvars, pn, sn, -1))     # x: [bs x nvars x patch_num x seq_num x patch_len] 
         x = x.permute(0,1,3,2,4)                          # x: [bs x nvars x seq_num x patch_num x patch_len]
         
         return x
