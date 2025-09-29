@@ -2,7 +2,7 @@ from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
-from utils.metrics import metric
+from utils.metrics import metric, classification_metric
 
 import numpy as np
 import torch
@@ -326,7 +326,7 @@ class Exp_Main(Exp_Basic):
     
                     pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                     true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
-                print()
+                
                 preds.append(pred)
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy())
@@ -339,30 +339,39 @@ class Exp_Main(Exp_Basic):
                         gt = np.concatenate(trues, axis = 0)
                         pd = np.concatenate(preds, axis = 0)
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
-    
+            print()
             if self.args.test_flop:
                 test_params_flop((batch_x.shape[1],batch_x.shape[2]))
                 exit()
-            preds = np.array(preds)
-            trues = np.array(trues)
-            inputx = np.array(inputx)
-    
-            preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-            trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-            inputx = inputx.reshape(-1, inputx.shape[-2], inputx.shape[-1])
     
             # result save
             folder_path = './results/' + setting + '/'
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
     
-            mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues)
-            print('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
-            f = open("result.txt", 'a')
-            f.write(setting + "  \n")
-            f.write('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
-            f.write('\n')
-            f.write('\n')
+            if self.hybrid:
+                preds = np.array(np.concatenate(preds, axis = 0))
+                trues = np.array(np.concatenate(trues, axis = 0))
+                accuracy, precision, recall, f1 = classification_metric(preds, trues)
+                f = open("result.txt", 'a')
+                f.write(setting + "  \n")
+                f.write('accuracy:{}, precision:{}, recall:{}, f1:{}'.format(accuracy, precision, recall, f1))
+                f.write('\n')
+                f.write('\n')
+            else:
+                preds = np.array(preds)
+                trues = np.array(trues)
+                inputx = np.array(inputx)
+                preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+                trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+                inputx = inputx.reshape(-1, inputx.shape[-2], inputx.shape[-1])
+                mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues)
+                print('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
+                f = open("result.txt", 'a')
+                f.write(setting + "  \n")
+                f.write('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
+                f.write('\n')
+                f.write('\n')
             f.close()
     
             # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
