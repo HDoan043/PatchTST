@@ -353,6 +353,7 @@ class Exp_Main(Exp_Basic):
                 preds = np.array(np.concatenate(preds, axis = 0))
                 trues = np.array(np.concatenate(trues, axis = 0))
                 accuracy, precision, recall, f1 = classification_metric(preds, trues)
+                print('accuracy:{}, precision:{}, recall:{}, f1:{}'.format(accuracy, precision, recall, f1))
                 f = open("result.txt", 'a')
                 f.write(setting + "  \n")
                 f.write('accuracy:{}, precision:{}, recall:{}, f1:{}'.format(accuracy, precision, recall, f1))
