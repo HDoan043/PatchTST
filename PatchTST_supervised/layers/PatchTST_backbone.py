@@ -203,7 +203,7 @@ class Reconstruct_Head(nn.Module):
         super().__init__()
         self.attention = nn.MultiheadAttention(d_model, n_heads, batch_first = True)
         self.ff = nn.Sequential( nn.Linear(d_model, 512), nn.Linear(512, d_model))
-        self.f1 = nn.Relu()
+        self.f1 = nn.ReLU()
         self.reconstruct = nn.Linear(d_model, patch_len)
         
     def forward(self, x):                                 # x: [bs x nvars x patch_num x seq_num x d_model]
