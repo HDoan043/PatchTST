@@ -496,7 +496,8 @@ class Dataset_Anomaly_Detect(Dataset):
         if self.target in cols :
             cols.remove(self.target)
         cols.remove('date')
-        df_data = df_raw[cols + [self.target]]
+        df_data = df_raw[cols]
+        df_label = df_raw[self.target]
 
         border1_ls = [0, 1000000-100000, 1000000]
         border2_ls = [1000000-100000, 1000000, -1]
@@ -505,6 +506,7 @@ class Dataset_Anomaly_Detect(Dataset):
         border2 = border2_ls[self.set_type]
         
         df_data = df_data[border1: border2]
+        df_label = df_label[border1: border2]
         
         # print(cols)
 
@@ -516,10 +518,9 @@ class Dataset_Anomaly_Detect(Dataset):
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
-        cols = list(data.columns)
-        cols.remove(self.target)
-        self.data_x = data[cols]
-        self.data_y = data[self.target]
+        
+        self.data_x = data
+        self.data_y = df_label.values
         
     def __getitem__(self, index):
         s_begin = index
