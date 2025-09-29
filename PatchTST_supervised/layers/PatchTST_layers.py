@@ -7,12 +7,34 @@ __all__ = [
     'SinCosPosEncoding', 
     'Coord2dPosEncoding', 
     'Coord1dPosEncoding', 
-    'positional_encoding'
+    'positional_encoding',
+    'HybridLoss'
 ]           
 
 import torch
 from torch import nn
 import math
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class HybridLoss(nn.Module):
+    def __init__(self, lambda_reg=0.01):
+        super().__init__()
+        # Khởi tạo trọng số w1, w2 (dạng trainable)
+        self.weights = nn.Parameter(torch.randn(2))  # [w1, w2]
+        self.lambda_reg = lambda_reg
+
+    def forward(self, L1, L2):
+        # Softmax để chuyển thành trọng số chuẩn hóa
+        weights = F.softmax(self.weights, dim=0)  # [w1, w2] sau softmax
+        loss = weights[0] * L1 + weights[1] * L2
+
+        # Regularizer
+        reg = self.lambda_reg * torch.sqrt(torch.sum(self.weights ** 2))
+
+        return loss + reg
 
 class Transpose(nn.Module):
     def __init__(self, *dims, contiguous=False): 
