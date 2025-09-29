@@ -60,10 +60,12 @@ class Exp_Main(Exp_Basic):
         total_loss = []
         self.model.eval()
         self.threshold = 0
+        total_batch = len(vali_loader)
         with torch.no_grad():
             # pbar = tqdm(vali_loader)
             # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
             for i,  batch in enumerate(vali_loader):
+                print(f"\rProcessing {i*100/total_batch} % ...", end= "")
                 if self.hybrid:
                     if isinstance(batch, list) or isinstance(batch, tuple):
                         batch = batch[0]
@@ -115,7 +117,7 @@ class Exp_Main(Exp_Basic):
                     # pbar.set_postfix({"Loss" : f"{loss}" })
     
                     total_loss.append(loss)
-        
+                print()
         total_loss = np.average(total_loss)
         self.model.train()
         
