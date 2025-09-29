@@ -163,6 +163,7 @@ class Exp_Main(Exp_Basic):
                     loss = self.model(batch)
                     loss = torch.mean(loss, dim = 0)
                     train_loss.append(loss.item())
+        
                 else:
                     batch_x, batch_y, batch_x_mark, batch_y_mark = batch
                     batch_x = batch_x.float().to(self.device)
