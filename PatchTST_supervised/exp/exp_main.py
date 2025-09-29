@@ -284,7 +284,9 @@ class Exp_Main(Exp_Basic):
                     batch_x = batch_x.float().to(self.device)
                     loss = self.model(batch_x)
                     pred = (loss > self.threshold).detach().cpu().numpy()
+                    print(pred.shape)
                     true = batch_y.detach().cpu().numpy()
+                    print(true.shape)
                     
                 else: 
                     batch_x, batch_y, batch_x_mark, batch_y_mark = batch
@@ -331,9 +333,13 @@ class Exp_Main(Exp_Basic):
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy())
                 if i % 20 == 0:
-                    input = batch_x.detach().cpu().numpy()
-                    gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
-                    pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
+                    if not self.hybrid:   
+                        input = batch_x.detach().cpu().numpy()
+                        gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
+                        pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
+                    else:
+                        gt = np.concatenate(trues, axis = 0)
+                        pd = np.concatenate(preds, axis = 0)
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
     
             if self.args.test_flop:
