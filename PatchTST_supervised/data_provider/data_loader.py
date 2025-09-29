@@ -53,7 +53,8 @@ Chuẩn Dataset của repository:
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h'):
+                 target='OT', scale=True, timeenc=0, freq='h',
+                train_size=100000, val_size=10000):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -141,7 +142,8 @@ class Dataset_ETT_hour(Dataset):
 class Dataset_ETT_minute(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTm1.csv',
-                 target='OT', scale=True, timeenc=0, freq='t'):
+                 target='OT', scale=True, timeenc=0, freq='t',
+                train_size=100000, val_size=10000):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -231,7 +233,8 @@ class Dataset_ETT_minute(Dataset):
 class Dataset_Custom(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='train.csv',
-                 target='number_sold', scale=True, timeenc=0, freq='d'):
+                 target='number_sold', scale=True, timeenc=0, freq='d',
+                train_size=100000, val_size=10000):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -344,7 +347,8 @@ class Dataset_Custom(Dataset):
 class Dataset_Pred(Dataset):
     def __init__(self, root_path, flag='pred', size=None,
                  features='S', data_path='train.csv',
-                 target='number_sold', scale=True, inverse=False, timeenc=0, freq='d', cols=None):
+                 target='number_sold', scale=True, inverse=False, timeenc=0, freq='d', cols=None,
+                train_size=100000, val_size=10000):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -457,7 +461,8 @@ class Dataset_Pred(Dataset):
 class Dataset_Anomaly_Detect(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='train.csv',
-                 target='category', scale=True, timeenc=1, freq='d'):
+                 target='category', scale=True, timeenc=1, freq='d', 
+                 train_size=100000, val_size=10000):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -472,6 +477,8 @@ class Dataset_Anomaly_Detect(Dataset):
         assert flag in ['train', 'test', 'val']
         type_map = {'train': 0, 'val': 1, 'test': 2}
         self.set_type = type_map[flag]
+        self.train_size = train_size
+        self.val_size = val_size
 
         self.features = features
         self.target = target
@@ -499,8 +506,8 @@ class Dataset_Anomaly_Detect(Dataset):
         df_data = df_raw[cols]
         df_label = df_raw[self.target]
 
-        border1_ls = [0, 100000 - 10000, 100000]
-        border2_ls = [100000 - 10000, 100000, -1]
+        border1_ls = [0, self.train_size, self.train_size + self.val_size]
+        border2_ls = [self.train_size, self.train_size+self.val_size, -1]
 
         border1 = border1_ls[self.set_type]
         border2 = border2_ls[self.set_type]
