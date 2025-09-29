@@ -454,7 +454,7 @@ class Dataset_Pred(Dataset):
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
 
-class Dataset_Anomaly_Detect_test(Dataset):
+class Dataset_Anomaly_Detect(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='train.csv',
                  target='category', scale=True, timeenc=1, freq='d'):
