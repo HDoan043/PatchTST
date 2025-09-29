@@ -497,6 +497,14 @@ class Dataset_Anomaly_Detect(Dataset):
             cols.remove(self.target)
         cols.remove('date')
         df_data = df_raw[cols + [self.target]]
+
+        border1_ls = [0, 1000000-100000, 1000000]
+        border2_ls = [1000000-100000, 1000000, -1]
+
+        border1 = border1_ls[self.set_type]
+        border2 = border2_ls[self.set_type]
+        
+        df_data = df_data[border1: border2]
         
         # print(cols)
 
