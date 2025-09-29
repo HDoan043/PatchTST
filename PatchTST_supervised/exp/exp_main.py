@@ -283,10 +283,8 @@ class Exp_Main(Exp_Basic):
                     batch_x, batch_y = batch
                     batch_x = batch_x.float().to(self.device)
                     loss = self.model(batch_x)
-                    pred = (loss > self.threshold).detach().cpu().numpy()
-                    print(pred.shape)
+                    pred = (loss > self.threshold).detach().cpu().numpy()*1
                     true = batch_y.detach().cpu().numpy()
-                    print(true.shape)
                     
                 else: 
                     batch_x, batch_y, batch_x_mark, batch_y_mark = batch
