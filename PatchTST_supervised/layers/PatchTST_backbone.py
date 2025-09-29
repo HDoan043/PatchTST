@@ -156,7 +156,7 @@ class PatchTST_backbone(nn.Module):
             bs, nvars, target_window = forecast_loss.shape
             forecast_loss = torch.reshape(forecast_loss, (bs, nvars* target_window))                             # forecast_loss: [bs x nvars * target_window]
             forecast_loss = forecast_loss.mean(dim = 1).squeeze()                                                # forecast_loss: [bs x 1]
-            combine_loss = torch.Stack([forecast_loss, reconstruct_loss])                                        # combine_loss: [2 x bs]
+            combine_loss = torch.stack([forecast_loss, reconstruct_loss])                                        # combine_loss: [2 x bs]
             combine_loss = combine_loss.permute(1,0)                                                             # combine_loss: [bs x 2]
 
             # COMBINING LOSSES
