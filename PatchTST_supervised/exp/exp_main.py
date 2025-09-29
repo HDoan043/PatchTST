@@ -64,7 +64,9 @@ class Exp_Main(Exp_Basic):
             for i,  batch in enumerate(vali_loader):
                 if self.hybrid:
                     batch = batch.float().to(self.device)
-                    output = self.model(batch)
+                    loss = self.model(batch)
+                    loss = torch.mean(loss)
+                    total_loss.append(loss)
                     
                 else:
                     batch_x, batch_y, batch_x_mark, batch_y_mark = batch
