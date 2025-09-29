@@ -140,7 +140,7 @@ class PatchTST_backbone(nn.Module):
             # do patching
             if self.padding_patch == 'end':
                 forecast_z = self.padding_patch_layer(forecast_z)
-            forecast_z = forecast_z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
+            forecast_z = forecast_z.unfold(dimension=-1, size=self.patch_length, step=self.stride)                # z: [bs x nvars x patch_num x patch_len]
 
              # model
             forecast_z = self.backbone(forecast_z)                                                                # z: [bs x nvars x d_model x patch_num]
