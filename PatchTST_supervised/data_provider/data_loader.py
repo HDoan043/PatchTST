@@ -507,7 +507,7 @@ class Dataset_Anomaly_Detect(Dataset):
         
         df_data = df_data[border1: border2]
         df_label = df_label[border1: border2]
-        
+        print(len(df_data))
         # print(cols)
 
         if self.scale:
