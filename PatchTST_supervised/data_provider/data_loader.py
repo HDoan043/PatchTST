@@ -453,3 +453,151 @@ class Dataset_Pred(Dataset):
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
+
+class Dataset_Anomaly_Detect_train(Dataset):
+    def __init__(self, root_path, flag='train', size=None,
+                 features='S', data_path='train.csv',
+                 target='number_sold', scale=True, timeenc=1, freq='d'):
+        # size [seq_len, label_len, pred_len]
+        # info
+        if size == None:
+            self.seq_len = 365    # Nhận vào dữ liệu 1 năm
+            self.label_len = 60    # Gợi ý cho decoder dữ liệu 2 tháng gần thời điểm dự đoán nhất
+            self.pred_len = 365    # Dự đoán dữ liệu của 1 năm tới
+        else:
+            self.seq_len = size[0]
+            self.label_len = size[1]
+            self.pred_len = size[2]
+        # init
+        assert flag in ['train', 'test', 'val']
+        type_map = {'train': 0, 'val': 1, 'test': 2}
+        self.set_type = type_map[flag]
+
+        self.features = features
+        self.target = target
+        self.scale = scale
+        self.timeenc = timeenc
+        self.freq = freq
+
+        self.root_path = root_path
+        self.data_path = data_path
+        self.__read_data__()
+
+    def __read_data__(self):
+        self.scaler = StandardScaler()
+        df_raw = pd.read_csv(os.path.join(self.root_path,
+                                          self.data_path))
+
+        '''
+        Sắp xếp lại các cột theo thứ tự 'date', features, 'target'
+        df_raw.columns: ['date', ...(other features), target feature]
+        '''
+        cols = list(df_raw.columns)
+        if self.target in cols :
+            cols.remove(self.target)
+        cols.remove('date')
+        if self.target in cols:
+            df_raw = df_raw[['date'] + cols + [self.target]]
+
+        else: df_raw = df_raw[['date'] + cols]
+        
+        # print(cols)
+
+        if self.scale:
+            train_data = df_data
+            self.scaler.fit(train_data.values)
+            # print(self.scaler.mean_)
+            # exit()
+            data = self.scaler.transform(df_data.values)
+        else:
+            data = df_data.values
+
+        self.data = data
+
+    def __getitem__(self, index):
+        s_begin = index
+        s_end = s_begin + self.seq_len + self.pred_len
+
+        seq = self.data[s_begin: s_end]
+
+        return seq
+
+    def __len__(self):
+        return len(self.data_x) - self.seq_len - self.pred_len + 1
+
+    def inverse_transform(self, data):
+        return self.scaler.inverse_transform(data)
+
+class Dataset_Anomaly_Detect_test(Dataset):
+    def __init__(self, root_path, flag='train', size=None,
+                 features='S', data_path='train.csv',
+                 target='category', scale=True, timeenc=1, freq='d'):
+        # size [seq_len, label_len, pred_len]
+        # info
+        if size == None:
+            self.seq_len = 365    # Nhận vào dữ liệu 1 năm
+            self.label_len = 60    # Gợi ý cho decoder dữ liệu 2 tháng gần thời điểm dự đoán nhất
+            self.pred_len = 365    # Dự đoán dữ liệu của 1 năm tới
+        else:
+            self.seq_len = size[0]
+            self.label_len = size[1]
+            self.pred_len = size[2]
+        # init
+        assert flag in ['train', 'test', 'val']
+        type_map = {'train': 0, 'val': 1, 'test': 2}
+        self.set_type = type_map[flag]
+
+        self.features = features
+        self.target = target
+        self.scale = scale
+        self.timeenc = timeenc
+        self.freq = freq
+
+        self.root_path = root_path
+        self.data_path = data_path
+        self.__read_data__()
+
+    def __read_data__(self):
+        self.scaler = StandardScaler()
+        df_raw = pd.read_csv(os.path.join(self.root_path,
+                                          self.data_path))
+
+        '''
+        Sắp xếp lại các cột theo thứ tự 'date', features, 'target'
+        df_raw.columns: ['date', ...(other features), target feature]
+        '''
+        cols = list(df_raw.columns)
+        if self.target in cols :
+            cols.remove(self.target)
+        cols.remove('date')
+        df_raw = df_raw[['date'] + cols + [self.target]]
+        
+        # print(cols)
+
+        if self.scale:
+            train_data = df_data
+            self.scaler.fit(train_data.values)
+            # print(self.scaler.mean_)
+            # exit()
+            data = self.scaler.transform(df_data.values)
+        else:
+            data = df_data.values
+
+        self.data_x = data
+        self.data_y = data.loc[self.target]
+        
+    def __getitem__(self, index):
+        s_begin = index
+        s_end = s_begin + self.seq_len + self.pred_len
+
+        seq = self.data_x[s_begin: s_end]
+        label = self.data_y[s_begin: s_end]                            # label: Series
+        label = label.sum(label > 0) >0                                # if there is at least a anomal time stamp in range, the range is anomal
+
+        return seq, label
+
+    def __len__(self):
+        return len(self.data_x) - self.seq_len - self.pred_len + 1
+
+    def inverse_transform(self, data):
+        return self.scaler.inverse_transform(data)
