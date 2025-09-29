@@ -273,8 +273,10 @@ class Exp_Main(Exp_Basic):
             os.makedirs(folder_path)
 
         self.model.eval()
+        total_batch =len(test_loader)
         with torch.no_grad():
             for i, batch in enumerate(test_loader):
+                print(f"\rProcessing {i*100/total_batch} % test set...", end = "")
                 if self.hybrid:
                     batch_x, batch_y = batch
                     batch_x = batch_x.float().to(self.device)
