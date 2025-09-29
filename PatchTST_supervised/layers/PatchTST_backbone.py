@@ -103,8 +103,8 @@ class PatchTST_backbone(nn.Module):
 
         if hybrid:
             self.reconstruct_head = Reconstruct_Heads(n_heads, d_model, self.pred_len + 1, patch_len)
-            self.reconstruct_loss = nn.MSELoss()
-            self.forecast_loss = nn.MSELoss()
+            self.reconstruct_loss = nn.MSELoss(reduction = 'none')
+            self.forecast_loss = nn.MSELoss(reduction = 'none')
             self.combine_loss = nn.Linear(2,1)
             
     def forward(self, z):                                                                   # z: [bs x nvars x (seq_len + pred_len)]
@@ -121,7 +121,9 @@ class PatchTST_backbone(nn.Module):
             reconstruct_z = reconstruct_z.permute(0,1,3,2,4)                                                           # z: [bs x nvars x patch_num x (pred_len + 1) x d_model] 
             reconstruct_z = self.reconstruct_head(reconstruct_z)                                                       # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
 
-            reconstruct_loss = self.reconstruct_loss(reconstruct_z, gt_reconstruct_z)                                  
+            reconstruct_loss = self.reconstruct_loss(reconstruct_z, gt_reconstruct_z)                                  # reconstruct_loss: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
+            batch_size = reconstruct_loss.shape[0]
+            reconstruct_loss = reconstruct_loss.view(batch_size, -1).mean(dim = 1)                                     # reconstruct_loss: [bs,] 
             
             # FORECASTING
             forecast_z = old_z[:, :, :self.seq_len]
@@ -147,11 +149,14 @@ class PatchTST_backbone(nn.Module):
                 forecast_z = self.revin_layer(forecast_z, 'denorm')
                 forecast_z = forecast_z.permute(0,2,1)
 
-            forecast_loss = self.forecast_loss(forecast_z, gt_forecast_z)
-            combine_loss = torch.Tensor([forecast_loss, reconstruct_loss])
+            forecast_loss = self.forecast_loss(forecast_z, gt_forecast_z)                                        # forecast_loss: [bs x nvars x target_window]
+            batch_size = forecast_loss.shape[0]
+            forecast_loss = forecast_loss.view(batch_size, -1).mean(dim = 1)                                     # forecast_loss: ]bs, ]
+            combine_loss = torch.Stack([forecast_loss, reconstruct_loss])                                        # combine_loss: [2 x bs]
+            combine_loss = combine_loss.permute(1,0)                                                             # combine_loss: [bs x 2]
 
             # COMBINING LOSSES
-            combining_loss = self.combine_loss(combine_loss)
+            combining_loss = self.combine_loss(combine_loss)                                                     # combine_loss: [bs x 1]
 
             return combining_loss
 
