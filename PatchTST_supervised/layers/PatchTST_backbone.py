@@ -162,7 +162,8 @@ class PatchTST_backbone(nn.Module):
 
             return combining_loss
 
-    
+        # if self.hybrid == 1:
+        #     reconstruct_z = reconstruct_z
         # norm
         if self.revin: 
             z = z.permute(0,2,1)
