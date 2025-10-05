@@ -102,7 +102,7 @@ class PatchTST_backbone(nn.Module):
             self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout)
 
         if hybrid:
-            self.padding_for_hybrid = nn.ReflectionPad1d(0, context_window - target_window)
+            self.padding_for_hybrid = nn.ReflectionPad1d((0, context_window - target_window))
             self.reconstruct_head = Reconstruct_Head(n_heads, d_model, 2, patch_len)
             self.reconstruct_loss = nn.MSELoss(reduction = 'none')
             self.forecast_loss = nn.MSELoss(reduction = 'none')
