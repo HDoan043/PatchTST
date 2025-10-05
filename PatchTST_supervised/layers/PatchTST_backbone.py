@@ -204,12 +204,12 @@ class PatchTST_backbone(nn.Module):
                     )
 
 class Combine_Channels(nn.Module):
-    def __init__(self, num_channels, d_model, d_ff = 128):
+    def __init__(self, num_channels, d_model):
         super().__init__()
         self.normalize = nn.LayerNorm(num_channels)
         self.attention = nn.MultiheadAttention(d_model, 8, batch_first = True)
         ls_ff = []
-        for _ in range(d_ff):
+        for _ in range(3):
             ls_ff.extend(
                 [nn.Linear(num_channels, 1024), 
                 nn.ReLU(), 
