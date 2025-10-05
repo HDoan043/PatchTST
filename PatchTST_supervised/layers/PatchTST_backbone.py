@@ -209,7 +209,7 @@ class Combine_Channels(nn.Module):
         self.normalize = nn.LayerNorm(num_channels)
         self.attention = nn.MultiheadAttention(d_model, 8, batch_first = True)
         ls_ff = []
-        for _ in range(30):
+        for _ in range(15):
             ls_ff.extend(
                 [nn.Linear(num_channels, 1024), 
                 nn.ReLU(), 
