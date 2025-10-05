@@ -209,7 +209,7 @@ class Combine_Channels(nn.Module):
         self.normalize = nn.LayerNorm(num_channels)
         self.attention = nn.MultiheadAttention(d_model, 8, batch_first = True)
         ls_ff = []
-        for _ in range(5):
+        for _ in range(3):
             ls_ff.extend(
                 [nn.Linear(num_channels, 1024), 
                 nn.ReLU(), 
@@ -256,8 +256,10 @@ class Reconstruct_Head(nn.Module):
     def __init__(self, n_heads, d_model, seq_num, patch_len):
         super().__init__()
         self.attention = nn.MultiheadAttention(d_model, n_heads, batch_first = True)
-        self.ff = nn.Sequential( nn.Linear(d_model, 512), nn.Linear(512, d_model))
-        self.f1 = nn.ReLU()
+        ls_ff = []
+        for _ in range(3):
+            ls_ff.extend(nn.Linear(d_model, 512), nn.ReLU(), nn.Linear(512, d_model), nn.ReLU())
+        self.ff = nn.Sequential(*ls_ff)
         self.reconstruct = nn.Linear(d_model, patch_len)
         
     def forward(self, x):                                 # x: [bs x nvars x patch_num x seq_num x d_model]
@@ -266,7 +268,6 @@ class Reconstruct_Head(nn.Module):
         att, _ = self.attention(x,x,x)                    # x: [bs * nvars * patch_num x seq_num x d_model]
         x = x + att                                       # x: [bs * nvars * patch_num x seq_num x d_model]
         x = self.ff(x)                                    # x: [bs * nvars * patch_num x seq_num x d_model]
-        x = self.f1(x)                                    # x: [bs * nvars * patch_num x seq_num x d_model]
         x = self.reconstruct(x)                           # x: [bs * nvars * patch_num x seq_num x patch_len]
         x = torch.reshape(x, (bs, nvars, pn, sn, -1))     # x: [bs x nvars x patch_num x seq_num x patch_len] 
         x = x.permute(0,1,3,2,4)                          # x: [bs x nvars x seq_num x patch_num x patch_len]
