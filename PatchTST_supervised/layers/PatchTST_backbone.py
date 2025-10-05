@@ -87,7 +87,7 @@ class PatchTST_backbone(nn.Module):
                                 n_layers=n_layers, d_model=d_model, n_heads=n_heads, d_k=d_k, d_v=d_v, d_ff=d_ff,
                                 attn_dropout=attn_dropout, dropout=dropout, act=act, key_padding_mask=key_padding_mask, padding_var=padding_var,
                                 attn_mask=attn_mask, res_attention=res_attention, pre_norm=pre_norm, store_attn=store_attn,
-                                pe=pe, learn_pe=learn_pe, verbose=verbose, multi_patches = multi_patches, hybrid = hybrid, **kwargs)
+                                pe=pe, learn_pe=learn_pe, verbose=verbose, multi_patches = multi_patches, hybrid = hybrid, nvars = c_in, **kwargs)
 
         # Head
         self.head_nf = d_model * patch_num if not multi_patches else d_model * patch_num[0]
@@ -102,7 +102,8 @@ class PatchTST_backbone(nn.Module):
             self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout)
 
         if hybrid:
-            self.reconstruct_head = Reconstruct_Head(n_heads, d_model, self.pred_len + 1, patch_len)
+            self.padding_for_hybrid = nn.ReflectionPad1d(0, context_window - target_window)
+            self.reconstruct_head = Reconstruct_Head(n_heads, d_model, 2, patch_len)
             self.reconstruct_loss = nn.MSELoss(reduction = 'none')
             self.forecast_loss = nn.MSELoss(reduction = 'none')
             self.combine_loss = HybridLoss()
@@ -111,7 +112,8 @@ class PatchTST_backbone(nn.Module):
         if self.hybrid:
             # RECONSTRUCT
             old_z = z
-            reconstruct_z = old_z.unfold(dimension = -1, size = self.seq_len, step = 1)                        # z: [bs x nvars x (pred_len +1) x seq_len]
+            reconstruct_z = self.padding_for_hybrid(z)                                                         # z: [bs x nvars x 2 * seq_len]
+            reconstruct_z = reconstruct_z.unfold(dimension = -1, size = self.seq_len, step = self.seq_len)     # z: [bs x nvars x 2 x seq_len]
             
             if self.padding_patch == 'end':
                 bs = z.shape[0]
@@ -201,6 +203,40 @@ class PatchTST_backbone(nn.Module):
                     nn.Conv1d(head_nf, vars, 1)
                     )
 
+class Combine_Channel(nn.Module):
+    def __init__(self, num_channels, d_model, d_ff = 128):
+        super().__init__()
+        self.normalize = nn.LayerNorm(num_channels)
+        self.attention = nn.MultiAttention(d_model, 8, batch_first = True)
+        ls_ff = []
+        for _ in range(len(d_ff)):
+            ls_ff.extend(
+                [nn.Linear(num_channels, 1024), 
+                nn.ReLU(), 
+                nn.Linear(1024, num_channels), 
+                nn.ReLU(), 
+                nn.Linear(num_channels, num_channels)]
+            )  
+        
+        self.ff = nn.Sequential( 
+            *ls_ff
+        )
+
+    def forward(self, x):                                # x: [bs x nvars x (seq_num x ) patch_num x d_model] 
+        x = self.normalize(x)
+        att = self.attention(x,x,x)
+        x = att + x                                      # x: [bs x nvars x (seq_num x ) patch_num x d_model]
+        if len(x.shape) == 5:
+            x = x.permute(0, 2, 3, 4, 1)                 # x: [bs x seq_num x patch_num x d_model x nvars]
+        else:
+            x = x.permute(0, 2, 3, 1)                    # x: [bs x patch_num x d_model x nvars]
+        x = self.ff(x)                                   # x: [bs x (seq_num x ) patch_num x d_model x nvars]
+        if len(x.shape) == 5:
+            x = x.permute(0, 4, 1, 2, 3)                 # x: [bs x nvars x seq_num x patch_num x d_model]
+        else:
+            x = x.permute(0, 3, 1, 2)                    # x: [bs x nvars x patch_num x d_model]
+        return x
+        
 class Reconstruct_Head(nn.Module):
     def __init__(self, n_heads, d_model, seq_num, patch_len):
         super().__init__()
@@ -265,7 +301,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
                  d_ff=256, norm='BatchNorm', attn_dropout=0., dropout=0., act="gelu", store_attn=False,
                  key_padding_mask='auto', padding_var=None, attn_mask=None, res_attention=True, pre_norm=False,
-                 pe='zeros', learn_pe=True, verbose=False, multi_patches = False, hybrid = False, **kwargs):
+                 pe='zeros', learn_pe=True, verbose=False, multi_patches = False, hybrid = False, nvars = 1, **kwargs):
         
         
         super().__init__()
@@ -294,6 +330,9 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             # Positional encoding
             self.W_pos = positional_encoding(pe, learn_pe, q_len, d_model)
 
+        if self.hybrid: 
+            self.combine_channels_first = Combine_Channels(nvars, d_model)
+            self.combine_channels_last = Combine_Channels(nvars, d_model)
         # Residual dropout
         self.dropout = nn.Dropout(dropout)
 
@@ -329,6 +368,8 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             # Input encoding
             x = self.W_P(x)                                                      # x: [bs x nvars x (seq_num x ) patch_num x d_model]
             old_shape = x.shape
+            if self.hybrid:
+                x = self.combine_channels(x)                                         # x: [bs x nvars x (seq_num x ) patch_num x d_model]
             if len(x.shape)==5:
                 u = torch.reshape(x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4]))  # u: [bs * nvars (* seq_num ) x patch_num x d_model]
             else:
@@ -338,6 +379,8 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
         # Encoder
         z = self.encoder(u)                                                          # z: [bs * nvars x patch_num x d_model]
         z = torch.reshape(z, old_shape)                                              # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
+        if self.hybrid:
+            z = self.combine(z)                                                      # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
         if len(old_shape) == 4:
             z = z.permute(0,1,3,2)                                                   # z: [bs x nvars x d_model x patch_num]
         
