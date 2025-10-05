@@ -369,7 +369,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             x = self.W_P(x)                                                      # x: [bs x nvars x (seq_num x ) patch_num x d_model]
             old_shape = x.shape
             if self.hybrid:
-                x = self.combine_channels(x)                                         # x: [bs x nvars x (seq_num x ) patch_num x d_model]
+                x = self.combine_channels_first(x)                                   # x: [bs x nvars x (seq_num x ) patch_num x d_model]
             if len(x.shape)==5:
                 u = torch.reshape(x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4]))  # u: [bs * nvars (* seq_num ) x patch_num x d_model]
             else:
@@ -380,7 +380,7 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
         z = self.encoder(u)                                                          # z: [bs * nvars x patch_num x d_model]
         z = torch.reshape(z, old_shape)                                              # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
         if self.hybrid:
-            z = self.combine(z)                                                      # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
+            z = self.combine_channels_last(z)                                        # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
         if len(old_shape) == 4:
             z = z.permute(0,1,3,2)                                                   # z: [bs x nvars x d_model x patch_num]
         
