@@ -230,15 +230,21 @@ class Combine_Channels(nn.Module):
             x = x.permute(0,2,3,1)                       # x: [bs x patch_num x d_model x nvars]
         x = self.normalize(x)
         if len(x.shape) == 5:
-            x = x.permute(0,4,1,2,3)                     # x: [bs x nvars x seq_num x patch_num x d_model]
+            x = x.permute(0,1,2,4,3)                     # x: [bs x seq_num x patch_num x nvars x d_model]
         else:
-            x = x.permute(0,3,1,2)                       # x: [bs x nvars x patch_num x d_model]
+            x = x.permute(0,1,3,2)                       # x: [bs x patch_num x nvars x d_model]
+        old_shape = x.shape                              # x: [bs x (seq_num x) patch_num x nvars x d_model]
+        if len(old_shape) == 5:
+            x = torch.reshape( x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4])) # x: [bs * seq_num * patch_num x nvars x d_model]
+        else:
+            x = torch.reshape( x, (x.shape[0]*x.shape[1], x.shape[2], x.shape[3])  # x: [bs * patch_num x nvars x d_model]
         att = self.attention(x,x,x)
-        x = att + x                                      # x: [bs x nvars x (seq_num x ) patch_num x d_model]
+        x = att + x                                      # x: [bs * nvars * (seq_num x ) patch_num x d_model]
+        x = torch.reshape(x, old_shape)                  # x: [bs x (seq_num x) patch_num x nvars x d_model]
         if len(x.shape) == 5:
-            x = x.permute(0, 2, 3, 4, 1)                 # x: [bs x seq_num x patch_num x d_model x nvars]
+            x = x.permute(0,1,2,4,3)                     # x: [bs x seq_num x patch_num x d_model x nvars]
         else:
-            x = x.permute(0, 2, 3, 1)                    # x: [bs x patch_num x d_model x nvars]
+            x = x.permute(0,1,3,2)                       # x: [bs x patch_num x d_model x nvars]
         x = self.ff(x)                                   # x: [bs x (seq_num x ) patch_num x d_model x nvars]
         if len(x.shape) == 5:
             x = x.permute(0, 4, 1, 2, 3)                 # x: [bs x nvars x seq_num x patch_num x d_model]
