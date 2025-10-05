@@ -223,7 +223,16 @@ class Combine_Channels(nn.Module):
         )
 
     def forward(self, x):                                # x: [bs x nvars x (seq_num x ) patch_num x d_model] 
+        # permute x in order to make the nvars be the last shape because the LayerNorm will work with the last dim of samples
+        if len(x.shape) == 5:
+            x = x.permute(0,2,3,4,1)                     # x: [bs x seq_num x patch_num x d_model x nvars]
+        else: 
+            x = x.permute(0,2,3,1)                       # x: [bs x patch_num x d_model x nvars]
         x = self.normalize(x)
+        if len(x.shape) == 5:
+            x = x.permute(0,4,1,2,3)                     # x: [bs x nvars x seq_num x patch_num x d_model]
+        else:
+            x = x.permute(0,3,1,2)                       # x: [bs x nvars x patch_num x d_model]
         att = self.attention(x,x,x)
         x = att + x                                      # x: [bs x nvars x (seq_num x ) patch_num x d_model]
         if len(x.shape) == 5:
