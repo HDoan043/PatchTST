@@ -237,7 +237,7 @@ class Combine_Channels(nn.Module):
         if len(old_shape) == 5:
             x = torch.reshape( x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4])) # x: [bs * seq_num * patch_num x nvars x d_model]
         else:
-            x = torch.reshape( x, (x.shape[0]*x.shape[1], x.shape[2], x.shape[3])  # x: [bs * patch_num x nvars x d_model]
+            x = torch.reshape( x, (x.shape[0]*x.shape[1], x.shape[2], x.shape[3]))  # x: [bs * patch_num x nvars x d_model]
         att = self.attention(x,x,x)
         x = att + x                                      # x: [bs * nvars * (seq_num x ) patch_num x d_model]
         x = torch.reshape(x, old_shape)                  # x: [bs x (seq_num x) patch_num x nvars x d_model]
