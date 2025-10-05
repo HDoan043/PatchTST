@@ -203,7 +203,7 @@ class PatchTST_backbone(nn.Module):
                     nn.Conv1d(head_nf, vars, 1)
                     )
 
-class Combine_Channel(nn.Module):
+class Combine_Channels(nn.Module):
     def __init__(self, num_channels, d_model, d_ff = 128):
         super().__init__()
         self.normalize = nn.LayerNorm(num_channels)
