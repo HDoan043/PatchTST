@@ -258,7 +258,7 @@ class Reconstruct_Head(nn.Module):
         self.attention = nn.MultiheadAttention(d_model, n_heads, batch_first = True)
         ls_ff = []
         for _ in range(3):
-            ls_ff.extend(nn.Linear(d_model, 512), nn.ReLU(), nn.Linear(512, d_model), nn.ReLU())
+            ls_ff.extend([nn.Linear(d_model, 512), nn.ReLU(), nn.Linear(512, d_model), nn.ReLU()])
         self.ff = nn.Sequential(*ls_ff)
         self.reconstruct = nn.Linear(d_model, patch_len)
         
