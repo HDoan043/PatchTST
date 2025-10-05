@@ -207,7 +207,7 @@ class Combine_Channels(nn.Module):
     def __init__(self, num_channels, d_model, d_ff = 128):
         super().__init__()
         self.normalize = nn.LayerNorm(num_channels)
-        self.attention = nn.MultiAttention(d_model, 8, batch_first = True)
+        self.attention = nn.MultiheadAttention(d_model, 8, batch_first = True)
         ls_ff = []
         for _ in range(len(d_ff)):
             ls_ff.extend(
