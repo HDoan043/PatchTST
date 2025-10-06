@@ -56,22 +56,25 @@ class Exp_Main(Exp_Basic):
         criterion = nn.MSELoss()
         return criterion
 
-    def vali(self, vali_data, vali_loader, criterion):
+    def vali(self, vali_data, vali_loader, criterion, choose_threshold = False):
         total_loss = []
         self.model.eval()
-        self.threshold = 0
         total_batch = len(vali_loader)
+
+        if choose_threshold:
+            self.threshold = 0
         with torch.no_grad():
             # pbar = tqdm(vali_loader)
             # for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
             for i,  batch in enumerate(vali_loader):
-                print(f"\rProcessing {i*100/total_batch} % ...", end= "")
+                print(f"\rProcessing {(i+1)*100/total_batch} % ...", end= "")
                 if self.hybrid:
                     if isinstance(batch, list) or isinstance(batch, tuple):
                         batch = batch[0]
                     batch = batch.float().to(self.device)
                     loss = self.model(batch)
-                    self.threshold = loss.max() if loss.max() >= self.threshold else self.threshold
+                    if choose_threshold:
+                        self.threshold = loss.max() if loss.max() >= self.threshold else self.threshold
                     loss = torch.mean(loss)
                     loss = loss.detach().cpu()
                     total_loss.append(loss)
@@ -240,7 +243,7 @@ class Exp_Main(Exp_Basic):
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
-            vali_loss = self.vali(vali_data, vali_loader, criterion)
+            vali_loss = self.vali(vali_data, vali_loader, criterion, choose_threshold = True)
             test_loss = self.vali(test_data, test_loader, criterion)
 
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
@@ -278,7 +281,7 @@ class Exp_Main(Exp_Basic):
         total_batch =len(test_loader)
         with torch.no_grad():
             for i, batch in enumerate(test_loader):
-                print(f"\rProcessing {i*100/total_batch} % test set...", end = "")
+                print(f"\rProcessing {(i+1)*100/total_batch} % test set...", end = "")
                 if self.hybrid:
                     batch_x, batch_y = batch
                     batch_x = batch_x.float().to(self.device)
