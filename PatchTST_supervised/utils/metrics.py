@@ -48,10 +48,10 @@ def classification_metric(pred, true):
     y_pred = pred
 
     # Confusion matrix
-    TP = np.sum((y_true == 1) & (y_pred == 1))
+    TP = np.sum((y_true != 0) & (y_pred != 0))
     TN = np.sum((y_true == 0) & (y_pred == 0))
-    FP = np.sum((y_true == 0) & (y_pred == 1))
-    FN = np.sum((y_true == 1) & (y_pred == 0))
+    FP = np.sum((y_true == 0) & (y_pred != 0))
+    FN = np.sum((y_true != 0) & (y_pred == 0))
     
     accuracy  = (TP + TN) / (TP + TN + FP + FN + 1e-12)
     precision = TP / (TP + FP + 1e-12)
