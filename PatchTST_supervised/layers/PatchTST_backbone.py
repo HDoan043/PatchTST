@@ -204,22 +204,23 @@ class PatchTST_backbone(nn.Module):
                     )
 
 class Combine_Channels(nn.Module):
-    def __init__(self, num_channels, d_model):
+    def __init__(self, in_channels, d_model, out_channels):
         super().__init__()
-        self.normalize = nn.LayerNorm(num_channels)
+        self.normalize = nn.LayerNorm(in_channels)
         self.attention = nn.MultiheadAttention(d_model, 8, batch_first = True)
         ls_ff = []
         for _ in range(3):
             ls_ff.extend(
-                [nn.Linear(num_channels, 1024), 
+                [nn.Linear(in_channels, 1024), 
                 nn.ReLU(), 
-                nn.Linear(1024, num_channels), 
+                nn.Linear(1024, in_channels), 
                 nn.ReLU(), 
-                nn.Linear(num_channels, num_channels)]
+                nn.Linear(in_channels, in_channels)]
             )  
         
         self.ff = nn.Sequential( 
-            *ls_ff
+            *ls_ff,
+            nn.Linear(in_channels, out_channels)
         )
 
     def forward(self, x):                                # x: [bs x nvars x (seq_num x ) patch_num x d_model] 
@@ -245,11 +246,11 @@ class Combine_Channels(nn.Module):
             x = x.permute(0,1,2,4,3)                     # x: [bs x seq_num x patch_num x d_model x nvars]
         else:
             x = x.permute(0,1,3,2)                       # x: [bs x patch_num x d_model x nvars]
-        x = self.ff(x)                                   # x: [bs x (seq_num x ) patch_num x d_model x nvars]
+        x = self.ff(x)                                   # x: [bs x (seq_num x ) patch_num x d_model x num_out_channels]
         if len(x.shape) == 5:
-            x = x.permute(0, 4, 1, 2, 3)                 # x: [bs x nvars x seq_num x patch_num x d_model]
+            x = x.permute(0, 4, 1, 2, 3)                 # x: [bs x num_out_channels x seq_num x patch_num x d_model]
         else:
-            x = x.permute(0, 3, 1, 2)                    # x: [bs x nvars x patch_num x d_model]
+            x = x.permute(0, 3, 1, 2)                    # x: [bs x num_out_channels x patch_num x d_model]
         return x
         
 class Reconstruct_Head(nn.Module):
@@ -347,8 +348,8 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             self.W_pos = positional_encoding(pe, learn_pe, q_len, d_model)
 
         if self.hybrid: 
-            self.combine_channels_first = Combine_Channels(nvars, d_model)
-            self.combine_channels_last = Combine_Channels(nvars, d_model)
+            self.new_channel = Combine_Channels(nvars, d_model, 1)
+            self.combine_channels = Combine_Channels(nvars + 1, d_model, nvars)
         # Residual dropout
         self.dropout = nn.Dropout(dropout)
 
@@ -384,26 +385,31 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
             # Input encoding
             x = self.W_P(x)                                                      # x: [bs x nvars x (seq_num x ) patch_num x d_model]
             old_shape = x.shape
-            if self.hybrid:
-                x = self.combine_channels_first(x)                                   # x: [bs x nvars x (seq_num x ) patch_num x d_model]
             if len(x.shape)==5:
                 u = torch.reshape(x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4]))  # u: [bs * nvars (* seq_num ) x patch_num x d_model]
             else:
                 u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))  # u: [bs * nvars x patch_num x d_model]
             u = self.dropout(u + self.W_pos)                                         # u: [bs * nvars ( * seq_num ) x patch_num x d_model]
+            if self.hybrid:
+                tem = torch.reshape(u, old_shape)                                    # tem: [bs x nvars x patch_num x d_model]
+                tem1 = self.new_channel(tem)                                         # x: [bs x 1 x (seq_num x) patch_num x d_model]
+                u = torch.cat([tem, tem1], dim = 1)                                  # x: [bs x (nvars + 1) x (seq_num x ) patch_num x d_model]           
+                old_shape = u.shape
+                if len(u.shape)==5:
+                    u = torch.reshape(x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4]))  # u: [bs * (nvars + 1) (* seq_num ) x patch_num x d_model]
+                else:
+                    u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))  # u: [bs * (nvars +1) x patch_num x d_model]
 
         # Encoder
-        z = self.encoder(u)                                                          # z: [bs * nvars x patch_num x d_model]
-        z = torch.reshape(z, old_shape)                                              # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
-        if self.hybrid:
+        z = self.encoder(u)                                                          # z: [bs * nvars/(nvars + 1) x patch_num x d_model]
+        z = torch.reshape(z, old_shape)                                              # z: [bs x nvars/(nvars + 1) x ( seq_num x ) patch_num x d_model]
+        if self.hybrid:                                                              # z: [bs x (nvars + 1) x (seq_num x ) patch_num x d_model]
             z = self.combine_channels_last(z)                                        # z: [bs x nvars x ( seq_num x ) patch_num x d_model]
         if len(old_shape) == 4:
             z = z.permute(0,1,3,2)                                                   # z: [bs x nvars x d_model x patch_num]
         
         return z    
-            
-            
-    
+              
 # Cell
 class TSTEncoder(nn.Module):
     def __init__(self, q_len, d_model, n_heads, d_k=None, d_v=None, d_ff=None, 
