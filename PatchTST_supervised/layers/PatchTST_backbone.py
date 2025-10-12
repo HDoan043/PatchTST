@@ -396,9 +396,9 @@ class TSTiEncoder(nn.Module):  #i means channel-independent
                 u = torch.cat([tem, tem1], dim = 1)                                  # x: [bs x (nvars + 1) x (seq_num x ) patch_num x d_model]           
                 old_shape = u.shape
                 if len(u.shape)==5:
-                    u = torch.reshape(x, (x.shape[0]*x.shape[1]*x.shape[2], x.shape[3], x.shape[4]))  # u: [bs * (nvars + 1) (* seq_num ) x patch_num x d_model]
+                    u = torch.reshape(u, (u.shape[0]*u.shape[1]*u.shape[2], u.shape[3], u.shape[4]))  # u: [bs * (nvars + 1) (* seq_num ) x patch_num x d_model]
                 else:
-                    u = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3]))  # u: [bs * (nvars +1) x patch_num x d_model]
+                    u = torch.reshape(u, (u.shape[0]*u.shape[1],u.shape[2],u.shape[3]))  # u: [bs * (nvars +1) x patch_num x d_model]
 
         # Encoder
         z = self.encoder(u)                                                          # z: [bs * nvars/(nvars + 1) x patch_num x d_model]
