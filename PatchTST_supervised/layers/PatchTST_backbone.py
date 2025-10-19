@@ -360,11 +360,11 @@ class BertMask():
         
 class BertHead():
     def __init__(self, d_model, patch_len):
-        self.recover = torch.Sequential(
-            torch.nn(d_model , 512), torch.relu(),
-            torch.nn(512, 1024), torch.relu(),
-            torch.nn(1024, 512), torch.relu(),
-            torch.nn(512, patch_len)
+        self.recover = nn.Sequential(
+            nn.Linear(d_model , 512), nn.relu(),
+            nn.Linear(512, 1024), nn.relu(),
+            nn.Linear(1024, 512), nn.relu(),
+            nn.Linear(512, patch_len)
         )
         
     def forward(self, x):                                        # x: [bs x nvars x d_model x patch_num]
