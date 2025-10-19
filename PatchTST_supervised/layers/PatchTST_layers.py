@@ -31,7 +31,7 @@ class HybridLoss(nn.Module):
         # Softmax để chuyển thành trọng số chuẩn hóa
         weights = F.softmax(self.weights, dim=0)  # [w1, w2] sau softmax
         loss = 0
-        for i in range(self.num_losses:
+        for i in range(self.num_losses):
             loss += weights[i] * list_of_losses[i]
 
         # Regularizer
