@@ -107,7 +107,11 @@ class PatchTST_backbone(nn.Module):
             self.reconstruct_head = Reconstruct_Head(n_heads, d_model, 2, patch_len)
             self.reconstruct_loss = nn.MSELoss(reduction = 'none')
             self.forecast_loss = nn.MSELoss(reduction = 'none')
-            self.combine_loss = HybridLoss()
+
+            if bert_ratio:
+                self.combine_loss = HybridLoss(3)
+            else:
+                self.combine_loss = HybridLoss()
 
         if bert_ratio:
             self.bert = True
