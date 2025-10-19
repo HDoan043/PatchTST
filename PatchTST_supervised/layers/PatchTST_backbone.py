@@ -362,8 +362,8 @@ class BertHead():
     def __init__(self, d_model, patch_len):
         self.recover = nn.Sequential(
             nn.Linear(d_model , 512), nn.relu(),
-            nn.Linear(512, 1024), nn.relu(),
-            nn.Linear(1024, 512), nn.relu(),
+            nn.Linear(512, 1024), nn.ReLU(),
+            nn.Linear(1024, 512), nn.ReLU(),
             nn.Linear(512, patch_len)
         )
         
