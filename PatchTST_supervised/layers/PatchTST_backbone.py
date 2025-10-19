@@ -347,7 +347,7 @@ class Flatten_Head(nn.Module):
             x = self.dropout(x)
         return x
         
-class BertMask():
+class BertMask(nn.Module):
     def __init__(self, bert_ratio=0.3):
         self.bert_ratio = bert_ratio
         
@@ -358,7 +358,7 @@ class BertMask():
 
         return mask_x, mask
         
-class BertHead():
+class BertHead(nn.Module):
     def __init__(self, d_model, patch_len):
         self.recover = nn.Sequential(
             nn.Linear(d_model , 512), nn.ReLU(),
