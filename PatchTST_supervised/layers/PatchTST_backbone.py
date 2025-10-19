@@ -354,7 +354,7 @@ class BertMask(nn.Module):
         
     def forward(self, x):                                        # x : [bs x nvars x patch_num x patch_len]
         shape = x.shape
-        mask = (torch.randn(shape) > self.bert_ratio, device = x.device).float()    # mask: [bs x nvars x patch_num x patch_len]
+        mask = (torch.randn(shape, device = x.device) > self.bert_ratio).float()    # mask: [bs x nvars x patch_num x patch_len]
         mask_x = x * mask                                        # mask_x: [bs x nvars x patch_num x patch_len]
 
         return mask_x, mask
