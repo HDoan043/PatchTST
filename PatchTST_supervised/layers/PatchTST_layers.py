@@ -20,18 +20,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class HybridLoss(nn.Module):
-    def __init__(self, num_lossse = 2, lambda_reg=0.01):
+    def __init__(self, num_lossses = 2, lambda_reg=0.01):
         super().__init__()
         # Khởi tạo trọng số w1, w2 (dạng trainable)
-        self.weights = nn.Parameter(torch.randn(num_loss))  # [w1, w2]
-        self.num_loss = num_loss
+        self.weights = nn.Parameter(torch.randn(num_losses))  # [w1, w2]
+        self.num_losses = num_losses
         self.lambda_reg = lambda_reg
 
     def forward(self, *list_of_losses):
         # Softmax để chuyển thành trọng số chuẩn hóa
         weights = F.softmax(self.weights, dim=0)  # [w1, w2] sau softmax
         loss = 0
-        for i in range(self.num_loss):
+        for i in range(self.num_losses:
             loss += weights[i] * list_of_losses[i]
 
         # Regularizer
@@ -92,7 +92,6 @@ class series_decomp(nn.Module):
     
     
 # pos_encoding
-
 def PositionalEncoding(q_len, d_model, normalize=True):
     pe = torch.zeros(q_len, d_model)
     position = torch.arange(0, q_len).unsqueeze(1)
