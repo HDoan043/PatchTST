@@ -347,8 +347,9 @@ class Flatten_Head(nn.Module):
             x = self.dropout(x)
         return x
         
-class BertMask():
+class BertMask(nn.Module):
     def __init__(self, bert_ratio=0.3):
+        super().__init__()
         self.bert_ratio = bert_ratio
         
     def forward(self, x):                                        # x : [bs x nvars x patch_num x patch_len]
