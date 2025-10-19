@@ -181,7 +181,7 @@ class PatchTST_backbone(nn.Module):
                 patching_bert_z = bert_z.unfold(dimension=-1, size=self.patch_length, step=self.stride)       # z: [bs x nvars x patch_num x patch_len]
 
                 # mask
-                bert_z, mask = self.bert_mask(old_z)                                                          # z: [bs x nvars x patch_num x patch_len]
+                bert_z, mask = self.bert_mask(patching_bert_z)                                                # z: [bs x nvars x patch_num x patch_len]
                 gt = old_z * (1 - mask)
                 bert_z = self.backbone(bert_z)                                                                # z: [bs x nvars x d_models x patch_num]
                 # recover
