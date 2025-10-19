@@ -53,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
     parser.add_argument('--multi_patches', type=int, default=0, help='use multipatches instead of only a patch, True 1 False 0')
     parser.add_argument('--hybrid', type=int, default=0, help='use hybrid or only autoencoder to detect anomaly or not, 0: non use, 1: autoencoder-based only, 2: hybrid')
+    parser.add_argument('--bert_ratio', type=float, default=0, help='use bert or not, 0: not use, 0 < bert_ratio < 1 : ratio of random masked position when using bert')
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
