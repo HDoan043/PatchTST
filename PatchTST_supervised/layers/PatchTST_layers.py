@@ -20,7 +20,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class HybridLoss(nn.Module):
-    def __init__(self, num_lossses = 2, lambda_reg=0.01):
+    def __init__(self, num_losses = 2, lambda_reg=0.01):
         super().__init__()
         # Khởi tạo trọng số w1, w2 (dạng trainable)
         self.weights = nn.Parameter(torch.randn(num_losses))  # [w1, w2]
