@@ -20,16 +20,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class HybridLoss(nn.Module):
-    def __init__(self, lambda_reg=0.01):
+    def __init__(self, num_lossse = 2, lambda_reg=0.01):
         super().__init__()
         # Khởi tạo trọng số w1, w2 (dạng trainable)
-        self.weights = nn.Parameter(torch.randn(2))  # [w1, w2]
+        self.weights = nn.Parameter(torch.randn(num_loss))  # [w1, w2]
+        self.num_loss = num_loss
         self.lambda_reg = lambda_reg
 
-    def forward(self, L1, L2):
+    def forward(self, *list_of_losses):
         # Softmax để chuyển thành trọng số chuẩn hóa
         weights = F.softmax(self.weights, dim=0)  # [w1, w2] sau softmax
-        loss = weights[0] * L1 + weights[1] * L2
+        loss = 0
+        for i in range(self.num_loss):
+            loss += weights[i] * list_of_losses[i]
 
         # Regularizer
         reg = self.lambda_reg * torch.sqrt(torch.sum(self.weights ** 2))
