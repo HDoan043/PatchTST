@@ -7,6 +7,7 @@ from torch import nn
 from torch import Tensor
 import torch.nn.functional as F
 import numpy as np
+import random
 
 #from collections import OrderedDict
 from layers.PatchTST_layers import *
@@ -175,9 +176,12 @@ class PatchTST_backbone(nn.Module):
 
             # BERT
             if self.bert:
+                # select a random seq-len size sequence in original ( seq-len + pred-len) size sequence
+                rand_idx = random.randint(0, self.pred_len)
+                rand_input = z[:,:, rand_idx : rand_idx + self.seq_len]
                 # do patching
                 if self.padding_patch == 'end':
-                    bert_z = self.padding_patch_layer(z)
+                    bert_z = self.padding_patch_layer(rand_input)
                 patching_bert_z = bert_z.unfold(dimension=-1, size=self.patch_length, step=self.stride)       # z: [bs x nvars x patch_num x patch_len]
 
                 # mask
