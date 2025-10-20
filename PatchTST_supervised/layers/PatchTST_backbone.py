@@ -199,9 +199,13 @@ class PatchTST_backbone(nn.Module):
                 bs, nvars, patch_num , patch_len = bert_loss.shape
                 bert_loss = torch.reshape(bert_loss, (bs, nvars * patch_num * patch_len))                     # bert_loss: [bs x nvars * patch_num * patch_len]
                 bert_loss = bert_loss.mean(dim = 1).squeeze()                                                 # bert_loss: [bs x ]
-                
-            # COMBINING LOSSES
-            combining_loss = self.combine_loss(forecast_loss, reconstruct_loss)                                  # combine_loss: [bs x 1]
+
+                # COMBINING LOSSES
+                combining_loss = self.combine_loss(forecast_loss, reconstruct_loss, bert_loss)                # combine_loss: [bs x 1]
+
+            else:
+                # COMBINING LOSSES
+                combining_loss = self.combine_loss(forecast_loss, reconstruct_loss)                                  # combine_loss: [bs x 1]
 
             return combining_loss
 
