@@ -175,10 +175,10 @@ class PatchTST_backbone(nn.Module):
 
 
             # BERT
-            if self.bert:
+            if self.bert:                                                                                     # z: [bs x nvars x (seq_len + pred_len)]
                 # select a random seq-len size sequence in original ( seq-len + pred-len) size sequence
                 rand_idx = random.randint(0, self.pred_len)
-                rand_input = z[:,:, rand_idx : rand_idx + self.seq_len]
+                rand_input = z[:,:, rand_idx : rand_idx + self.seq_len]                                       # z: [bs x nvars x seq_len]
                 # do patching
                 if self.padding_patch == 'end':
                     bert_z = self.padding_patch_layer(rand_input)
