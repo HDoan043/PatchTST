@@ -130,7 +130,7 @@ class PatchTST_backbone(nn.Module):
             reconstruct_bert_z = reconstruct_bert_z.permute(0,1,3,2,4)                                                           # z: [bs x nvars x patch_num x 2 x d_model] 
             reconstruct_bert_z = self.reconstruct_bert_head(reconstruct_bert_z)                                                  # z: [bs x nvars x 2 x patch_num x patch_len]
 
-            bs, nvars, sn, pn, pl = reconstruct_bert_loss.shape
+            bs, nvars, sn, pn, pl = reconstruct_bert_z.shape
             # reconstruct result
             reconstruct_z = reconstruct_bert_z * mask                                                                            # reconstruct_z: [bs x nvars x 2 x patch_num x patch_len]
             gt_reconstruct_z = gt_reconstruct_bert_z * mask
