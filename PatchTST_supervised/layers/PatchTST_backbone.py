@@ -139,7 +139,7 @@ class PatchTST_backbone(nn.Module):
             reconstruct_loss = reconstruct_loss.mean(dim = 1).squeeze()                                                          # reconstruct_loss: [bs]
 
             # bert result
-            bert_z = bert_z * mask                                                                                               # bert_z : [bs x nvars x 2 x patch_num x patch_len]
+            bert_z = reconstruct_bert_z * (1-mask)                                                                                               # bert_z : [bs x nvars x 2 x patch_num x patch_len]
             gt_bert_z = gt_reconstruct_bert_z * (1-mask)
             bert_loss = self.bert_loss(bert_z, gt_bert_z)                                                                        # bert_loss: [bs x nvars x 2 x patch_num x patch_len]
             bert_loss = torch.reshape(bert_loss, (bs,nvars*sn*pn*pl))                                                            # bert_loss: [bs x nvars * 2 * patch_num * patch_len]
