@@ -105,45 +105,46 @@ class PatchTST_backbone(nn.Module):
 
         if hybrid:
             self.padding_for_hybrid = nn.ReflectionPad1d((0, context_window - target_window))
-            self.reconstruct_head = Reconstruct_Head(n_heads, d_model, 2, patch_len)
+            self.reconstruct_bert_head = Reconstruct_Bert_Head(n_heads, d_model, 2, patch_len)
             self.reconstruct_loss = nn.MSELoss(reduction = 'none')
-            self.forecast_loss = nn.MSELoss(reduction = 'none')
-
-            if bert_ratio:
-                self.combine_loss = HybridLoss(3)
-            else:
-                self.combine_loss = HybridLoss()
-
-        if bert_ratio:
-            self.bert = True
-            self.bert_mask = BertMask(bert_ratio = bert_ratio)
-            self.bert_head = BertHead(d_model = d_model, patch_len = patch_len)
             self.bert_loss = nn.MSELoss(reduction = 'none')
-        else:
-            self.bert = False
-            
+            self.forecast_loss = nn.MSELoss(reduction = 'none')
+            self.bert_mask = BertMask(bert_ratio = bert_ratio)
+            self.combine_loss = HybridLoss(3)
     def forward(self, z):                                                                   # z: [bs x nvars x (seq_len + pred_len)]
         if self.hybrid:
-            # RECONSTRUCT
+            # RECONSTRUCT & BERT
             old_z = z
-            reconstruct_z = self.padding_for_hybrid(z)                                                         # z: [bs x nvars x 2 * seq_len]
-            reconstruct_z = reconstruct_z.unfold(dimension = -1, size = self.seq_len, step = self.seq_len)     # z: [bs x nvars x 2 x seq_len]
+            reconstruct_bert_z = self.padding_for_hybrid(z)                                                              # z: [bs x nvars x 2 * seq_len]
+            reconstruct_bert_z = reconstruct_bert_z.unfold(dimension = -1, size = self.seq_len, step = self.seq_len)     # z: [bs x nvars x 2 x seq_len]
             
             if self.padding_patch == 'end':
                 bs = z.shape[0]
-                reconstruct_z = torch.reshape(reconstruct_z, (reconstruct_z.shape[0]* reconstruct_z.shape[1], reconstruct_z.shape[2], reconstruct_z.shape[3]))  # z: [bs * nvars x (pred_len+1) x seq_len]
-                reconstruct_z = self.padding_patch_layer(reconstruct_z)                                                
-                reconstruct_z = torch.reshape(reconstruct_z, (bs, -1, reconstruct_z.shape[1], reconstruct_z.shape[2]))             # z: [bs x nvars x (pred_len+1) x seq_len]
-            gt_reconstruct_z = reconstruct_z.unfold(dimension = -1, size = self.patch_length, step = self.stride)      # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
-            reconstruct_z = self.backbone(gt_reconstruct_z)                                                            # z: [bs x nvars x (pred_len +1) x patch_num x d_model]
-            reconstruct_z = reconstruct_z.permute(0,1,3,2,4)                                                           # z: [bs x nvars x patch_num x (pred_len + 1) x d_model] 
-            reconstruct_z = self.reconstruct_head(reconstruct_z)                                                       # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
+                reconstruct_bert_z = torch.reshape(reconstruct_bert_z, (reconstruct_bert_z.shape[0]* reconstruct_bert_z.shape[1], reconstruct_bert_z.shape[2], reconstruct_bert_z.shape[3]))  # z: [bs * nvars x (pred_len+1) x seq_len]
+                reconstruct_bert_z = self.padding_patch_layer(reconstruct_bert_z)                                                
+                reconstruct_bert_z = torch.reshape(reconstruct_bert_z, (bs, -1, reconstruct_bert_z.shape[1], reconstruct_bert_z.shape[2]))             # z: [bs x nvars x (pred_len+1) x seq_len]
+            gt_reconstruct_bert_z = reconstruct_bert_z.unfold(dimension = -1, size = self.patch_length, step = self.stride)      # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
+            # mask input before passing it into backbone
+            reconstruct_bert_z = self.bert_mask(reconstruct_bert_z)
+            reconstruct_bert_z = self.backbone(gt_reconstruct_bert_z)                                                            # z: [bs x nvars x 2 x patch_num x d_model]
+            reconstruct_bert_z = reconstruct_bert_z.permute(0,1,3,2,4)                                                           # z: [bs x nvars x patch_num x 2 x d_model] 
+            reconstruct_bert_z = self.reconstruct_bert_head(reconstruct_bert_z)                                                  # z: [bs x nvars x 2 x patch_num x patch_len]
 
-            reconstruct_loss = self.reconstruct_loss(reconstruct_z, gt_reconstruct_z)                                  # reconstruct_loss: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
-            bs, nvars, sn, pn, pl = reconstruct_loss.shape
-            reconstruct_loss = torch.reshape(reconstruct_loss, (bs, nvars*sn*pn*pl))                                   # reconstruct_loss: [bs x nvars * (pred_len + 1) x patch_num x patch_len]
-            reconstruct_loss = reconstruct_loss.mean(dim = 1).squeeze()                                                # reconstruct_loss: [bs]
-            
+            bs, nvars, sn, pn, pl = reconstruct_bert_loss.shape
+            # reconstruct result
+            reconstruct_z = reconstruct_bert_z * mask                                                                            # reconstruct_z: [bs x nvars x 2 x patch_num x patch_len]
+            gt_reconstruct_z = gt_reconstruct_bert_z * mask
+            reconstruct_loss = self.reconstruct_loss(reconstruct_z, gt_reconstruct_z)                                            # reconstruct_loss: [bs x nvars x 2 x patch_num x patch_len]
+            reconstruct_loss = torch.reshape(reconstruct_loss, (bs, nvars*sn*pn*pl))                                             # reconstruct_loss: [bs x nvars * 2 * patch_num * patch_len]
+            reconstruct_loss = reconstruct_loss.mean(dim = 1).squeeze()                                                          # reconstruct_loss: [bs]
+
+            # bert result
+            bert_z = bert_z * mask                                                                                               # bert_z : [bs x nvars x 2 x patch_num x patch_len]
+            gt_bert_z = gt_reconstruct_bert_z * (1-mask)
+            bert_loss = self.bert_loss(bert_z, gt_bert_z)                                                                        # bert_loss: [bs x nvars x 2 x patch_num x patch_len]
+            bert_loss = torch.reshape(bert_loss, (bs,nvars*sn*pn*pl))                                                            # bert_loss: [bs x nvars * 2 * patch_num * patch_len]
+            bert_loss = bert_loss.mean(dim = 1).squeeze()                                                                        # bert_loss: [bs]
+                                    
             # FORECASTING
             forecast_z = old_z[:, :, :self.seq_len]
             gt_forecast_z = old_z[:, :, self.seq_len:]
@@ -173,40 +174,9 @@ class PatchTST_backbone(nn.Module):
             forecast_loss = torch.reshape(forecast_loss, (bs, nvars* target_window))                             # forecast_loss: [bs x nvars * target_window]
             forecast_loss = forecast_loss.mean(dim = 1).squeeze()                                                # forecast_loss: [bs x 1]
 
-
-            # BERT
-            if self.bert:                                                                                     # z: [bs x nvars x (seq_len + pred_len)]
-                # select a random seq-len size sequence in original ( seq-len + pred-len) size sequence
-                rand_idx = random.randint(0, self.pred_len)
-                rand_input = z[:,:, rand_idx : rand_idx + self.seq_len]                                       # z: [bs x nvars x seq_len]
-                # do patching
-                if self.padding_patch == 'end':
-                    bert_z = self.padding_patch_layer(rand_input)
-                patching_bert_z = bert_z.unfold(dimension=-1, size=self.patch_length, step=self.stride)       # z: [bs x nvars x patch_num x patch_len]
-
-                # mask
-                bert_z, mask = self.bert_mask(patching_bert_z)                                                # z: [bs x nvars x patch_num x patch_len]
-                gt =  patching_bert_z* (1 - mask)
-                bert_z = self.backbone(bert_z)                                                                # z: [bs x nvars x d_models x patch_num]
-                # recover
-                bert_z = self.bert_head(bert_z)                                                               # z: [bs x nvars x patch_num x patch_len]
-
-                # forecast masked positions
-                bert_z = bert_z * (1 - mask)
-
-                # bert loss
-                bert_loss = self.bert_loss(bert_z, gt)                                                        # bert_loss: [bs x nvar x patch_num x patch_len]
-                bs, nvars, patch_num , patch_len = bert_loss.shape
-                bert_loss = torch.reshape(bert_loss, (bs, nvars * patch_num * patch_len))                     # bert_loss: [bs x nvars * patch_num * patch_len]
-                bert_loss = bert_loss.mean(dim = 1).squeeze()                                                 # bert_loss: [bs x ]
-
-                # COMBINING LOSSES
-                combining_loss = self.combine_loss(forecast_loss, reconstruct_loss, bert_loss)                # combine_loss: [bs x 1]
-
-            else:
-                # COMBINING LOSSES
-                combining_loss = self.combine_loss(forecast_loss, reconstruct_loss)                                  # combine_loss: [bs x 1]
-
+            # COMBINING LOSSES
+            combining_loss = self.combine_loss(forecast_loss, reconstruct_loss, bert_loss)                       # combine_loss: [bs x 1]
+            
             return combining_loss
 
         # if self.hybrid == 1:
@@ -298,7 +268,7 @@ class Combine_Channels(nn.Module):
             x = x.permute(0, 3, 1, 2)                    # x: [bs x num_out_channels x patch_num x d_model]
         return x
         
-class Reconstruct_Head(nn.Module):
+class Reconstruct_Bert_Head(nn.Module):
     def __init__(self, n_heads, d_model, seq_num, patch_len):
         super().__init__()
         self.attention = nn.MultiheadAttention(d_model, n_heads, batch_first = True)
@@ -360,29 +330,13 @@ class BertMask(nn.Module):
         super().__init__()
         self.bert_ratio = bert_ratio
         
-    def forward(self, x):                                        # x : [bs x nvars x patch_num x patch_len]
+    def forward(self, x):                                                            # x: [bs x nvars x patch_num x seq_num x d_model]
         shape = x.shape
-        mask = (torch.randn(shape, device = x.device) > self.bert_ratio).float()    # mask: [bs x nvars x patch_num x patch_len]
-        mask_x = x * mask                                        # mask_x: [bs x nvars x patch_num x patch_len]
+        mask = (torch.randn(shape, device = x.device) > self.bert_ratio).float()     # mask: [bs x nvars x patch_num x seq_num x d_model]
+        mask_x = x * mask                                                            # mask_x: [bs x nvars x patch_num x seq_num x d_model]
 
         return mask_x, mask
-        
-class BertHead(nn.Module):
-    def __init__(self, d_model, patch_len):
-        super().__init__()
-        self.recover = nn.Sequential(
-            nn.Linear(d_model , 512), nn.ReLU(),
-            nn.Linear(512, 1024), nn.ReLU(),
-            nn.Linear(1024, 512), nn.ReLU(),
-            nn.Linear(512, patch_len)
-        )
-        
-    def forward(self, x):                                        # x: [bs x nvars x d_model x patch_num]
-        x = x.permute(0,1,3,2)                                   # x: [bs x nvars x patch_num x d_model]
-        x = self.recover(x)                                      # x: [bs x nvars x patch_num x patch_len]
 
-        return x
-        
 class TSTiEncoder(nn.Module):  #i means channel-independent
     def __init__(self, c_in, patch_num, patch_len, max_seq_len=1024,
                  n_layers=3, d_model=128, n_heads=16, d_k=None, d_v=None,
