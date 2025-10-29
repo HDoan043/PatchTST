@@ -125,7 +125,7 @@ class PatchTST_backbone(nn.Module):
                 reconstruct_bert_z = torch.reshape(reconstruct_bert_z, (bs, -1, reconstruct_bert_z.shape[1], reconstruct_bert_z.shape[2]))             # z: [bs x nvars x (pred_len+1) x seq_len]
             gt_reconstruct_bert_z = reconstruct_bert_z.unfold(dimension = -1, size = self.patch_length, step = self.stride)      # z: [bs x nvars x (pred_len + 1) x patch_num x patch_len]
             # mask input before passing it into backbone
-            reconstruct_bert_z, mask = self.bert_mask(reconstruct_bert_z)
+            reconstruct_bert_z, mask = self.bert_mask(gt_reconstruct_bert_z)
             reconstruct_bert_z = self.backbone(gt_reconstruct_bert_z)                                                            # z: [bs x nvars x 2 x patch_num x d_model]
             reconstruct_bert_z = reconstruct_bert_z.permute(0,1,3,2,4)                                                           # z: [bs x nvars x patch_num x 2 x d_model] 
             reconstruct_bert_z = self.reconstruct_bert_head(reconstruct_bert_z)                                                  # z: [bs x nvars x 2 x patch_num x patch_len]
